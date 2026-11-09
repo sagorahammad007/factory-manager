@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -9,10 +9,9 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
-<!-- Barcode Scanner Library -->
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-:root{--bg:#eceff1;--surface:#fff;--ink:#14171a;--mute:#5a636b;--line:#cfd5da;--accent:#f5b800;--dark:#14171a;--field:#fff;--red:#c62f26;--green:#1f8a4c;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--bg:#eceff1;--surface:#fff;--ink:#14171a;--mute:#5a636b;--line:#cfd5da;--accent:#f5b800;--dark:#14171a;--field:#fff;--red:#c62f26;--green:#1f8a4c;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101214;--surface:#1a1e22;--ink:#f2f4f5;--mute:#9aa4ad;--line:#2c3238;--dark:#0b0c0e;--field:#12151a;--red:#ff6b61;--green:#4cd185}}
 :root[data-theme="dark"]{--bg:#101214;--surface:#1a1e22;--ink:#f2f4f5;--mute:#9aa4ad;--line:#2c3238;--dark:#0b0c0e;--field:#12151a;--red:#ff6b61;--green:#4cd185}
 *{box-sizing:border-box}
@@ -211,7 +210,13 @@ draw();raf=requestAnimationFrame(loop)}
 function anim(){if(mql&&mql.matches){draw();return}if(!raf){lt=0;raf=requestAnimationFrame(loop)}}
 window.addEventListener('resize',function(){draw()});
 
-function kpi(c){var m=today().slice(0,7),i=0,e=0;c.led.forEach(function(r){if(r.d.slice(0,7)===m){i+=num(r.inc);e+=num(r.exp)}});return{net:i-e,n:c.stk.length}}
+function kpi(c){
+var m=today().slice(0,7),i=0,e=0;
+c.led.forEach(function(r){
+    if(r.d && r.d.slice(0,7)===m){i+=num(r.inc);e+=num(r.exp)}
+});
+return{net:i-e,n:c.stk.length}}
+
 function tickHtml(){var tk='';D.companies.forEach(function(c){var k=kpi(c);tk+='<span class="ti"><b>'+esc(c.name)+'</b> <i class="'+(k.net>=0?'pos':'neg')+'">'+(k.net>=0?'▲':'▼')+' '+money(Math.abs(k.net))+'</i><u>'+k.n+' items</u></span>'});return '<div class="trk">'+tk+tk+'</div>'}
 
 function vCo(){
@@ -228,7 +233,9 @@ function vHome(){
 var c=C();
 function b(v,t,s){return '<button class="big" data-a="go" data-v="'+v+'">'+t+'<small>'+s+'</small></button>'}
 var totalInc=0, totalExp=0;
-c.led.forEach(function(r){ if(r.d.slice(0,7)===today().slice(0,7)){ totalInc+=num(r.inc); totalExp+=num(r.exp); }});
+c.led.forEach(function(r){ 
+    if(r.d && r.d.slice(0,7)===today().slice(0,7)){ totalInc+=num(r.inc); totalExp+=num(r.exp); }
+});
 var netProfit = totalInc - totalExp;
 
 var lowStock='';
@@ -940,7 +947,6 @@ window.startScanner = function(action) {
         { facingMode: "environment" },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         (decodedText, decodedResult) => {
-            // Success callback
             window.stopScanner();
             if (window.scannerAction === 'search' || window.scannerAction === 'sell') {
                 S.q = decodedText;
