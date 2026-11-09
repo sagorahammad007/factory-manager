@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -905,10 +905,11 @@ console.error("Firebase init error:", e);
 gate(msgCard('Cannot connect. Check internet.','<button class="btn full" data-g="reload">Retry</button>'))})}
 
 function vAcct(){
+var c = C() || {};
 var h='<h2>Account &amp; security</h2>';
 if(CLOUDMODE)h+='<div class="card"><label class="note">Signed in as</label><b>'+esc(CL.email)+'</b><br><small class="note">'+esc(CL.role)+' · '+esc(CL.wname)+'</small><button class="btn alt full" data-a="signout">Sign out</button></div>';
 else h+='<div class="card"><b>Cloud sync off</b><p class="note">Local only. See SETUP-FIREBASE.txt.</p></div>';
-h+='<div class="card"><label class="note">Company BIN (VAT Reg)</label><input value="'+esc(C().bin||'')+'" data-f="bin" data-k="co" data-id="'+C().id+'" placeholder="e.g. 001234567-0101"></div>';
+h+='<div class="card"><label class="note">Company BIN (VAT Reg)</label><input value="'+esc(c.bin||'')+'" data-f="bin" data-k="co" data-id="'+(c.id||'')+'" placeholder="e.g. 001234567-0101"></div>';
 h+=pinHtml();
 var bi=bakInfo();
 h+='<h3>Backup</h3><div class="card"><p class="'+(bi.bad?'neg':'note')+'" style="margin:0 0 8px">Last backup: '+bi.txt+'</p><div class="g2"><button class="btn alt" data-a="bak">Save file</button>'+((!CLOUDMODE||CL.role==='owner')?'<button class="btn alt" data-a="rst">Restore file</button>':'')+'</div></div>';
