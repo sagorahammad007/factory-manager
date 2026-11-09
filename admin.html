@@ -24,19 +24,18 @@ header{display:flex;justify-content:space-between;align-items:center;border-bott
 #login{max-width:400px;margin:100px auto;text-align:center}
 input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;border:1px solid var(--line);font-family:inherit}
 </style>
-
-<!-- 1. Load the config file first -->
 <script src="firebase-config.js"></script>
-
 </head>
 <body>
 <div class="wrap">
   <header>
     <h1>⚙️ Admin Control Panel</h1>
-    <button id="logout" class="btn" style="display:none">Sign Out</button>
+    <div>
+      <button id="refreshBtn" class="btn" style="display:none; margin-right:10px; background:#39414a; color:#fff">Refresh</button>
+      <button id="logout" class="btn" style="display:none">Sign Out</button>
+    </div>
   </header>
 
-  <!-- Login Screen -->
   <div id="login" class="card">
     <h2>Owner Login</h2>
     <input type="email" id="email" placeholder="Admin Email" value="sagorahammad007@gmail.com">
@@ -45,7 +44,6 @@ input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;bord
     <p id="loginErr" style="color:var(--red); margin-top:10px;"></p>
   </div>
 
-  <!-- Main Dashboard -->
   <div id="dash" style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px">
       <div class="card"><h3>Total Clients</h3><h2 id="total">0</h2></div>
@@ -54,92 +52,84 @@ input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;bord
     
     <div class="card">
       <h3>Client Management</h3>
-      <div id="users"></div>
+      <div id="users"><p class="note">Loading...</p></div>
     </div>
   </div>
 </div>
 
-<!-- 2. Load the Firebase libraries and logic -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
   import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  // Wait for config to be ready
   const config = typeof firebaseConfig !== 'undefined' ? firebaseConfig : window.firebaseConfig;
-  
-  if (!config) {
-      alert("Error: firebase-config.js not found or missing keys.");
-  }
-
   const app = initializeApp(config);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
   const loginBtn = document.getElementById('loginBtn');
   const loginErr = document.getElementById('loginErr');
+  const userList = document.getElementById('users');
 
   loginBtn.addEventListener('click', () => {
       loginErr.innerText = "Signing in...";
       signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value)
-        .catch(e => {
-            loginErr.innerText = e.message;
-        });
+        .catch(e => { loginErr.innerText = e.message; });
   });
 
   document.getElementById('logout').addEventListener('click', () => signOut(auth));
+  document.getElementById('refreshBtn').addEventListener('click', () => loadUsers());
 
   window.approveUser = async (uid) => {
     await updateDoc(doc(db, "users", uid), { status: "active" });
-    alert("Client Approved!");
     loadUsers();
   };
 
   window.suspendUser = async (uid) => {
-    if(confirm("Are you sure? This will instantly block their access.")) {
+    if(confirm("Suspend this client? They will be locked out immediately.")) {
       await updateDoc(doc(db, "users", uid), { status: "suspended" });
-      alert("Client Suspended.");
       loadUsers();
     }
   };
 
   async function loadUsers() {
-    const querySnapshot = await getDocs(collection(db, "users"));
-    let html = '';
-    let pending = 0;
-    let total = 0;
-    
-    querySnapshot.forEach((docSnap) => {
-      const u = docSnap.data();
-      total++;
-      if (u.status === 'pending' || !u.status) pending++;
+    userList.innerHTML = '<p style="color:var(--accent)">Loading data from Firebase...</p>';
+    try {
+      const querySnapshot = await getDocs(collection(db, "users"));
+      let html = '';
+      let pending = 0;
+      let total = 0;
       
-      let badge = `<span class="status ${u.status || 'pending'}">${u.status || 'pending'}</span>`;
-      let actionBtn = '';
+      querySnapshot.forEach((docSnap) => {
+        const u = docSnap.data();
+        total++;
+        if (u.status === 'pending' || !u.status) pending++;
+        
+        let badge = `<span class="status ${u.status || 'pending'}">${u.status || 'pending'}</span>`;
+        let actionBtn = u.status === 'active' 
+          ? `<button class="btn red" onclick="suspendUser('${docSnap.id}')">Suspend</button>`
+          : `<button class="btn green" onclick="approveUser('${docSnap.id}')">Approve</button>`;
+
+        html += `
+          <div class="row">
+            <div>
+              <b>${u.email || 'No Email'}</b><br>
+              <small style="color:var(--line)">Role: ${u.role || 'owner'} | Workspace: ${u.wid || 'None'}</small>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              ${badge} ${actionBtn}
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('total').innerText = total;
+      document.getElementById('pending').innerText = pending;
+      userList.innerHTML = html || '<p style="color:var(--red)">Firebase returned 0 users. Your Firestore database is empty.</p>';
       
-      if (u.status === 'active') {
-        actionBtn = `<button class="btn red" onclick="suspendUser('${docSnap.id}')">Suspend</button>`;
-      } else {
-        actionBtn = `<button class="btn green" onclick="approveUser('${docSnap.id}')">Approve</button>`;
-      }
-
-      html += `
-        <div class="row">
-          <div>
-            <b>${u.email || 'No Email'}</b><br>
-            <small style="color:var(--line)">Role: ${u.role || 'owner'} | Workspace: ${u.wid || 'None'}</small>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center">
-            ${badge}
-            ${actionBtn}
-          </div>
-        </div>
-      `;
-    });
-
-    document.getElementById('total').innerText = total;
-    document.getElementById('pending').innerText = pending;
-    document.getElementById('users').innerHTML = html || '<p>No users found.</p>';
+    } catch (err) {
+      userList.innerHTML = `<p style="color:var(--red)">Error: ${err.message}<br>Check your Firebase Security Rules.</p>`;
+    }
   }
 
   onAuthStateChanged(auth, (user) => {
@@ -147,12 +137,13 @@ input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;bord
       document.getElementById('login').style.display = 'none';
       document.getElementById('dash').style.display = 'block';
       document.getElementById('logout').style.display = 'block';
+      document.getElementById('refreshBtn').style.display = 'inline-block';
       loadUsers();
     } else {
       document.getElementById('login').style.display = 'block';
       document.getElementById('dash').style.display = 'none';
       document.getElementById('logout').style.display = 'none';
-      if(user) loginErr.innerText = "You are logged in, but not as the Admin.";
+      document.getElementById('refreshBtn').style.display = 'none';
     }
   });
 </script>
