@@ -228,6 +228,9 @@ return{net:i-e,n:c.stk.length}}
 
 function tickHtml(){var tk='';D.companies.forEach(function(c){var k=kpi(c);tk+='<span class="ti"><b>'+esc(c.name)+'</b> <i class="'+(k.net>=0?'pos':'neg')+'">'+(k.net>=0?'▲':'▼')+' '+money(Math.abs(k.net))+'</i><u>'+k.n+' items</u></span>'});return '<div class="trk">'+tk+tk+'</div>'}
 
+
+
+
 function vCo(){
 var tk='',h='<h2 class="ct">Your companies<small>Tap a company to open it</small></h2>';
 h+='<button class="btn alt sm" data-a="go" data-v="acct" style="margin-bottom:10px">⚙ Account &amp; security</button>';
@@ -400,7 +403,7 @@ return '<div id="rcpt">'+
 }
 
 function status(c,d,id){return (c.att[d]||{})[id]||''}
-function earned(c,w){var e=0,t=today(),dd=0;Object.keys(c.att).forEach(function(k){if(k>t)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});return{days:dd,earn:e}}
+function earned(c,w){var e=0,t=today(),dd=0;Object.keys(c.att).forEach(function(k){if(k>t)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?0.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});return{days:dd,earn:e}}
 function advOf(c,id){return c.adv.filter(function(a){return a.wid===id}).reduce(function(s,a){return s+num(a.amt)},0)}
 function vWrk(){
 var c=C(),h='<h2>Worker data</h2><input id="wsq" placeholder="Search worker..." value="'+esc(S.wsq)+'" autocomplete="off"><div id="wsr" style="margin:8px 0">'+wsRes(c)+'</div>'+tabs(['info:Workers','att:Attendance','sal:Salary'],S.wtab,'wtab');
@@ -490,6 +493,7 @@ anim();
 if(FOC){var fe=document.querySelector(FOC);FOC='';if(fe){fe.scrollIntoView({block:'center'});fe.focus()}}}
 function find(k,id){var l=k==='co'?D.companies:C()[k];return l.filter(function(x){return x.id===id})[0]}
 function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else S.v='home';render();window.scrollTo(0,0)}
+
 
 var lpT=0,lpFired=false,lpX=0,lpY=0;
 document.addEventListener('pointerdown',function(e){var el=e.target.closest('[data-lp]');lpFired=false;if(!el||RO)return;lpX=e.clientX;lpY=e.clientY;clearTimeout(lpT);
