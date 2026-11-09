@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -24,6 +24,10 @@ header{display:flex;justify-content:space-between;align-items:center;border-bott
 #login{max-width:400px;margin:100px auto;text-align:center}
 input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;border:1px solid var(--line);font-family:inherit}
 </style>
+
+<!-- 1. Load the config file first -->
+<script src="firebase-config.js"></script>
+
 </head>
 <body>
 <div class="wrap">
@@ -37,7 +41,8 @@ input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;bord
     <h2>Owner Login</h2>
     <input type="email" id="email" placeholder="Admin Email" value="sagorahammad007@gmail.com">
     <input type="password" id="pass" placeholder="Password">
-    <button class="btn" style="width:100%" onclick="login()">Sign In</button>
+    <button class="btn" style="width:100%" id="loginBtn">Sign In</button>
+    <p id="loginErr" style="color:var(--red); margin-top:10px;"></p>
   </div>
 
   <!-- Main Dashboard -->
@@ -54,103 +59,102 @@ input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;bord
   </div>
 </div>
 
+<!-- 2. Load the Firebase libraries and logic -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, getDocs, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  // Initialize Firebase (Automatically pulls from your config file)
-  const script = document.createElement('script');
-  script.src = 'firebase-config.js';
-  document.head.appendChild(script);
+  // Wait for config to be ready
+  const config = typeof firebaseConfig !== 'undefined' ? firebaseConfig : window.firebaseConfig;
   
-  script.onload = () => {
-    const app = initializeApp(window.firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  if (!config) {
+      alert("Error: firebase-config.js not found or missing keys.");
+  }
 
-    window.login = () => {
+  const app = initializeApp(config);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const loginBtn = document.getElementById('loginBtn');
+  const loginErr = document.getElementById('loginErr');
+
+  loginBtn.addEventListener('click', () => {
+      loginErr.innerText = "Signing in...";
       signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value)
-        .catch(e => alert(e.message));
-    };
+        .catch(e => {
+            loginErr.innerText = e.message;
+        });
+  });
 
-    window.logout = () => signOut(auth);
+  document.getElementById('logout').addEventListener('click', () => signOut(auth));
 
-    window.approveUser = async (uid) => {
-      await updateDoc(doc(db, "users", uid), { status: "active" });
-      alert("Client Approved!");
-      loadUsers(db);
-    };
+  window.approveUser = async (uid) => {
+    await updateDoc(doc(db, "users", uid), { status: "active" });
+    alert("Client Approved!");
+    loadUsers();
+  };
 
-    window.suspendUser = async (uid) => {
-      if(confirm("Are you sure? This will instantly block their access.")) {
-        await updateDoc(doc(db, "users", uid), { status: "suspended" });
-        alert("Client Suspended.");
-        loadUsers(db);
-      }
-    };
-
-    window.deleteUser = async (uid) => {
-      if(confirm("Delete user profile from database? (They won't be able to log back in without re-registering)")) {
-        await deleteDoc(doc(db, "users", uid));
-        loadUsers(db);
-      }
-    };
-
-    async function loadUsers(db) {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      let html = '';
-      let pending = 0;
-      let total = 0;
-      
-      querySnapshot.forEach((docSnap) => {
-        const u = docSnap.data();
-        total++;
-        if (u.status === 'pending') pending++;
-        
-        let badge = `<span class="status ${u.status || 'pending'}">${u.status || 'pending'}</span>`;
-        let actionBtn = '';
-        
-        if (u.status === 'active') {
-          actionBtn = `<button class="btn red" onclick="suspendUser('${docSnap.id}')">Suspend</button>`;
-        } else {
-          actionBtn = `<button class="btn green" onclick="approveUser('${docSnap.id}')">Approve</button>`;
-        }
-
-        html += `
-          <div class="row">
-            <div>
-              <b>${u.email || 'No Email'}</b><br>
-              <small style="color:var(--line)">Role: ${u.role || 'owner'} | Workspace: ${u.wid || 'None'}</small>
-            </div>
-            <div style="display:flex;gap:10px;align-items:center">
-              ${badge}
-              ${actionBtn}
-            </div>
-          </div>
-        `;
-      });
-
-      document.getElementById('total').innerText = total;
-      document.getElementById('pending').innerText = pending;
-      document.getElementById('users').innerHTML = html || '<p>No users found.</p>';
+  window.suspendUser = async (uid) => {
+    if(confirm("Are you sure? This will instantly block their access.")) {
+      await updateDoc(doc(db, "users", uid), { status: "suspended" });
+      alert("Client Suspended.");
+      loadUsers();
     }
+  };
 
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.email === 'sagorahammad007@gmail.com') {
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('dash').style.display = 'block';
-        document.getElementById('logout').style.display = 'block';
-        loadUsers(db);
+  async function loadUsers() {
+    const querySnapshot = await getDocs(collection(db, "users"));
+    let html = '';
+    let pending = 0;
+    let total = 0;
+    
+    querySnapshot.forEach((docSnap) => {
+      const u = docSnap.data();
+      total++;
+      if (u.status === 'pending' || !u.status) pending++;
+      
+      let badge = `<span class="status ${u.status || 'pending'}">${u.status || 'pending'}</span>`;
+      let actionBtn = '';
+      
+      if (u.status === 'active') {
+        actionBtn = `<button class="btn red" onclick="suspendUser('${docSnap.id}')">Suspend</button>`;
       } else {
-        document.getElementById('login').style.display = 'block';
-        document.getElementById('dash').style.display = 'none';
-        document.getElementById('logout').style.display = 'none';
+        actionBtn = `<button class="btn green" onclick="approveUser('${docSnap.id}')">Approve</button>`;
       }
+
+      html += `
+        <div class="row">
+          <div>
+            <b>${u.email || 'No Email'}</b><br>
+            <small style="color:var(--line)">Role: ${u.role || 'owner'} | Workspace: ${u.wid || 'None'}</small>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            ${badge}
+            ${actionBtn}
+          </div>
+        </div>
+      `;
     });
 
-    document.getElementById('logout').addEventListener('click', window.logout);
-  };
+    document.getElementById('total').innerText = total;
+    document.getElementById('pending').innerText = pending;
+    document.getElementById('users').innerHTML = html || '<p>No users found.</p>';
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user && user.email === 'sagorahammad007@gmail.com') {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('dash').style.display = 'block';
+      document.getElementById('logout').style.display = 'block';
+      loadUsers();
+    } else {
+      document.getElementById('login').style.display = 'block';
+      document.getElementById('dash').style.display = 'none';
+      document.getElementById('logout').style.display = 'none';
+      if(user) loginErr.innerText = "You are logged in, but not as the Admin.";
+    }
+  });
 </script>
 </body>
 </html>
