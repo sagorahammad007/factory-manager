@@ -1,181 +1,880 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factory Manager Pro</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#14171a">
-  <script src="https://tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cloudflare.com">
-  <style>
-    body { background-color: #14171a; color: #ffffff; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Factory Manager</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14171a">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#eceff1;--surface:#fff;--ink:#14171a;--mute:#5a636b;--line:#cfd5da;--accent:#f5b800;--dark:#14171a;--field:#fff;--red:#c62f26;--green:#1f8a4c;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101214;--surface:#1a1e22;--ink:#f2f4f5;--mute:#9aa4ad;--line:#2c3238;--dark:#0b0c0e;--field:#12151a;--red:#ff6b61;--green:#4cd185}}
+:root[data-theme="dark"]{--bg:#101214;--surface:#1a1e22;--ink:#f2f4f5;--mute:#9aa4ad;--line:#2c3238;--dark:#0b0c0e;--field:#12151a;--red:#ff6b61;--green:#4cd185}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Barlow,Arial,sans-serif;line-height:1.45}
+h1,h2,h3,.logo{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;text-transform:uppercase;letter-spacing:.03em;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+header{position:sticky;top:0;z-index:10;background:var(--dark);color:#f2f4f5;border-bottom:4px solid var(--accent)}
+header .wrap{display:flex;align-items:center;gap:10px;height:56px}
+#bk{background:none;border:2px solid var(--accent);color:var(--accent);font:700 1rem "Barlow Condensed",Arial,sans-serif;padding:4px 10px;cursor:pointer;text-transform:uppercase}
+#tt{font:800 1.35rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+main{padding-top:16px;padding-bottom:70px}
+h2{font-size:1.8rem;margin-bottom:10px}h3{font-size:1.1rem;margin:18px 0 8px;color:var(--mute)}
+input,select{width:100%;padding:10px;font:inherit;background:var(--field);color:var(--ink);border:1px solid var(--line);border-radius:0}
+input:focus,select:focus{outline:2px solid var(--accent)}
+.btn{display:inline-block;background:var(--accent);color:#14171a;font:700 1rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;letter-spacing:.05em;padding:10px 16px;border:0;cursor:pointer}
+.btn.alt{background:var(--surface);color:var(--ink);border:2px solid var(--dark)}
+.btn.full{width:100%;margin-top:10px}
+.btn.sm{padding:6px 12px;font-size:.9rem}
+.card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);padding:12px;margin-bottom:12px}
+.co .btns{display:flex;gap:8px;margin-top:8px}.co .btns .btn{flex:1}
+.nm{font:700 1.2rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase}
+.big{display:block;width:100%;text-align:left;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-left:8px solid var(--accent);padding:18px;margin-bottom:12px;cursor:pointer;font:800 1.6rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase}
+.big small{display:block;font:500 .9rem Barlow,Arial,sans-serif;text-transform:none;color:var(--mute)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.tile{background:var(--surface);border:1px solid var(--line);padding:8px 10px}
+.tile small{color:var(--mute);text-transform:uppercase;font-size:.7rem;font-weight:600}
+.tile b{display:block;font:800 1.2rem "Barlow Condensed",Arial,sans-serif}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.sheet{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{background:var(--dark);color:var(--accent);font:700 .85rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 6px;position:sticky;top:0}
+td{border-top:1px solid var(--line);padding:2px}
+td input{border:0;background:transparent;padding:8px 6px}
+td.r{text-align:right;padding:8px 6px;white-space:nowrap}
+tr.tot td{font-weight:800;background:var(--bg);padding:8px 6px}
+.x{background:none;border:0;color:var(--red);font-size:1.2rem;cursor:pointer;padding:6px 8px}
+.tabs{display:flex;margin-bottom:12px}
+.tab{flex:1;font:800 1.05rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;padding:10px;background:var(--surface);color:var(--ink);border:2px solid var(--dark);cursor:pointer}
+.tab.on{background:var(--dark);color:var(--accent)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g2 label,.f label{display:block;font-size:.75rem;font-weight:600;color:var(--mute)}
+.adj{display:flex;gap:6px;margin-top:8px}.adj input{flex:1}
+.q{font:800 1.6rem "Barlow Condensed",Arial,sans-serif}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.arow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.arow .s{display:flex;gap:4px}
+.s button{width:40px;height:40px;border:2px solid var(--line);background:var(--field);color:var(--ink);font:800 1rem "Barlow Condensed",Arial,sans-serif;cursor:pointer}
+.s button.on{border-color:var(--dark);color:#14171a}
+.s button.on[data-s=P]{background:#4cd185}.s button.on[data-s=A]{background:#ff6b61}.s button.on[data-s=L]{background:#f5b800}.s button.on[data-s=H]{background:#8ec5ff}
+.note{color:var(--mute);font-size:.85rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--dark);color:#fff;padding:10px 18px;z-index:50;border-left:4px solid var(--accent)}
+
+body.co{--bg:#0b0e11;--surface:rgba(18,24,30,.84);--ink:#f2f4f5;--mute:#9aa4ad;--line:#2c3238;--field:#12151a;--red:#ff6b61;--green:#4cd185}
+body.co .tab{background:rgba(18,24,30,.84);color:#f2f4f5;border-color:#2c3238}
+#cv{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:none;pointer-events:none}
+body.co #cv{display:block}
+main{position:relative;z-index:1}
+[data-lp]{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;cursor:pointer}
+.ct{font-size:2rem}.ct small{display:block;font:500 .9rem Barlow,Arial,sans-serif;text-transform:none;color:var(--mute);letter-spacing:0}
+.tick{overflow:hidden;white-space:nowrap;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(11,14,17,.8);margin:10px -14px 16px;padding:7px 0}
+.trk{display:inline-flex;animation:tk 28s linear infinite}
+.ti{margin:0 22px;font:700 1rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;letter-spacing:.05em}
+.ti i{font-style:normal}.ti u{text-decoration:none;color:var(--mute);margin-left:8px}
+@keyframes tk{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.trk{animation:none}}
+.kp{color:var(--mute);font-size:.9rem;margin-top:2px}
+.chip{display:inline-block;margin:0 6px 6px 0;padding:8px 12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--accent);cursor:pointer;font:600 .95rem Barlow,Arial,sans-serif}
+.chip small{color:var(--mute);margin-left:6px}
+.ln{position:relative;border-top:1px solid var(--line);padding:10px 34px 10px 0}
+.ln .x{position:absolute;right:0;top:6px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;margin-top:4px}
+.g3 label,.g2 label{display:block;font-size:.75rem;font-weight:600;color:var(--mute)}
+.lt{font-weight:800;text-align:right;padding-bottom:10px}
+details.card summary{cursor:pointer;font:800 1.1rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase}
+details.card[open] summary{margin-bottom:8px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.dlg{background:var(--surface);color:var(--ink);border-left:6px solid var(--red);padding:20px;max-width:360px;width:100%;display:grid;gap:10px}
+.dlg p{margin:0;font-size:1.1rem}
+.btn.red{background:var(--red);color:#fff}
+.lk{background:none;border:0;color:var(--mute);text-decoration:underline;cursor:pointer;font:inherit}
+.mvb{display:flex;gap:6px}
+.mvb button{border:2px solid var(--dark);background:var(--accent);color:#14171a;font-weight:800;width:40px;height:40px;cursor:pointer}
+#rcpt{background:#fff;color:#111;border:1px solid #ccc;padding:20px;font-size:14px}
+#rcpt .rh b{font:800 1.5rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase}
+#rcpt .rh{border-bottom:3px solid #f5b800;padding-bottom:8px;margin-bottom:8px}
+#rcpt .rm{display:flex;justify-content:space-between;font-weight:600;margin:8px 0}
+#rcpt table{min-width:0;margin:8px 0}
+#rcpt th{background:#14171a;color:#f5b800;padding:6px;font-size:12px}
+#rcpt td{padding:6px;border-top:1px solid #ddd}
+#rcpt .r{text-align:right}
+#rcpt .rt{margin-left:auto;width:60%;min-width:200px}
+#rcpt .rt div{display:flex;justify-content:space-between;padding:3px 0}
+#rcpt .rt .gt{border-top:2px solid #111;font-weight:800}
+@media print{body *{visibility:hidden}#rcpt,#rcpt *{visibility:visible}#rcpt{position:absolute;left:0;top:0;width:100%;border:0}}
+#tick{margin:0}body.co .tab.on{background:var(--accent);color:#14171a;border-color:var(--accent)}#cv{opacity:.28}body.front #cv{opacity:1}body.co .btn.alt{border-color:#39414a}
+
+body.co{color-scheme:dark;--line:#3d4852}
+body.co input,body.co select,body.co textarea{background:transparent;border:1.5px solid #8793a0;color:#f2f4f5}
+body.co input::placeholder{color:#a3adb6;opacity:1}
+body.co input:focus,body.co select:focus,body.co textarea:focus{border-color:var(--accent);outline:2px solid var(--accent);background:rgba(245,184,0,.07)}
+body.co td input,body.co td select{border:1px solid #6b7782;margin:2px;width:calc(100% - 4px);padding:8px 6px}
+body.co option{background:#1a1e22;color:#f2f4f5}
+body.co .btn.alt,body.co .tab,body.co .s button,body.co .x{border-color:#8793a0}
+body.co .card,body.co .sheet,body.co .tile,body.co .item{border-color:#46515c}
+body.co .card{border-left-color:var(--accent)}
+body.co .item{border-left-color:var(--accent)}
+.st{font-size:.8rem;font-weight:600;margin-left:auto;white-space:nowrap}.st.on{color:var(--green)}.st.off{color:#f5b800}
+#gate,#lock{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;overflow:auto}
+#gate{z-index:80;background:rgba(8,10,12,.96)}
+#lock{z-index:100;background:#0b0e11}
+.gc,.lkc{background:#141a20;border:1px solid #46515c;border-left:6px solid var(--accent);padding:20px;max-width:400px;width:100%;color:#f2f4f5;margin:auto}
+.gc h2,.lkc h2{margin-bottom:10px}.gc p{margin:8px 0}
+.lkl{margin-bottom:8px}
+.gerr{color:#ff6b61;font-weight:600}
+.gm{margin:10px 0;display:grid;gap:8px}.gm label{display:flex;gap:8px;align-items:center;font-size:.9rem;color:#f2f4f5}
+input[type=radio]{width:auto !important;margin:0}
+.dots{font-size:1.6rem;letter-spacing:.3em;text-align:center;margin:8px 0;min-height:2rem}
+.lkm{color:#ff6b61;text-align:center;min-height:1.4rem;font-size:.9rem}
+.kp3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+.kp3 button{height:56px;font:700 1.4rem "Barlow Condensed",Arial,sans-serif;background:transparent;color:#f2f4f5;border:1.5px solid #8793a0;cursor:pointer}
+.lkf{display:block;margin:14px auto 0;background:none;border:0;color:#9aa4ad;text-decoration:underline;cursor:pointer}
+</style>
 </head>
-<body class="font-sans antialiased">
+<body>
+<header><div class="wrap"><svg id="lg" width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#f5b800"/><rect x="12" y="34" width="10" height="18" rx="3" fill="#14171a"/><rect x="27" y="24" width="10" height="28" rx="3" fill="#14171a"/><rect x="42" y="13" width="10" height="39" rx="3" fill="#14171a"/></svg><button id="bk" hidden>&larr; Back</button><div id="tt">Factory Manager</div><span id="st" class="st"></span></div></header>
+<div class="tick" id="tick"></div>
+<canvas id="cv"></canvas>
+<main class="wrap" id="app"></main>
+<div id="dlg"></div>
+<div id="gate"></div>
+<div id="lock"></div>
+<input type="file" id="rf" accept=".json,application/json" hidden>
+<script src="firebase-config.js"></script>
+<script>
+(function(){
+function $(i){return document.getElementById(i)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function fix(c){c.led=c.led||[];c.debt=c.debt||[];c.stk=c.stk||[];c.sal=c.sal||[];c.mov=c.mov||[];c.wrk=c.wrk||[];c.att=c.att||{};c.adv=c.adv||[];c.invNo=c.invNo||1;return c}
+function blank(n){return fix({id:uid(),name:n,ts:Date.now()})}
+function load(){try{var v=localStorage.getItem('fm_data');return v?JSON.parse(v):null}catch(e){return null}}
+var CFG=window.FM_CONFIG||(typeof firebaseConfig!=='undefined'?firebaseConfig:null);
+var CLOUDMODE=!!(CFG&&CFG.apiKey&&String(CFG.apiKey).indexOf('PASTE')<0&&CFG.projectId&&String(CFG.projectId).indexOf('PASTE')<0);
+var D=load(),LOCALSAVED=null;
+if(CLOUDMODE){LOCALSAVED=(D&&D.companies&&D.companies.length)?D:null;D={companies:[]}}
+else if(!D||!D.companies||!D.companies.length)D={companies:[blank('MS Recycle Plant'),blank('Brothers Recycle')]};
+D.companies.forEach(fix);
+function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2600)}
+function save(){if(CLOUDMODE){cloudDirty();return}try{localStorage.setItem('fm_data',JSON.stringify(D))}catch(e){toast('Could not save on this phone')}}
+function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function money(n){return '৳ '+(Math.round(n*100)/100).toLocaleString('en-US')}
+function dmy(d){var p=String(d).split('-');return p.length==3?p[2]+'-'+p[1]+'-'+p[0]:d}
+function num(v){return parseFloat(v)||0}
+function pad(n){return ('0000'+n).slice(-4)}
+function daysIn(m){return new Date(+m.slice(0,4),+m.slice(5,7),0).getDate()}
+function newCart(){return{d:today(),cust:'',phone:'',paid:'',lines:[]}}
+var S={v:'co',cid:null,atab:'inc',tab:'stock',wtab:'info',month:today().slice(0,7),date:today(),rd:today(),td:today(),sd:today(),ld:'',lq:'',wsq:'',wid:'',wm:today().slice(0,7),arm:'',q:'',sq:'',dq:'',mv:'',dlg:'',inv:'',cart:newCart()};
+function C(){return D.companies.filter(function(c){return c.id===S.cid})[0]}
+function armLbl(k){return S.arm===k?'Tap again to delete':'Delete'}
+function item(c,id){return c.stk.filter(function(x){return x.id===id})[0]}
+function mvAdj(c,it,delta,type,note,d){it.qty=num(it.qty)+delta;c.mov.push({id:uid(),d:d||today(),pid:it.id,name:it.name,unit:it.unit,delta:delta,type:type,note:note||''})}
+var TYPES={'in':'Produced / in','out':'Stock out',sale:'Sold',set:'Adjusted',open:'Opening'};
+function saleTotal(s){return s.lines.reduce(function(a,l){return a+l.qty*l.price},0)}
 
-  <div id="app" class="min-h-screen flex flex-col justify-between">
-    
-    <!-- HEADER -->
-    <header class="border-b border-gray-800 bg-[#191c1f] p-4 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <svg class="w-8 h-8 text-amber-500" viewBox="0 0 100 100" fill="currentColor">
-          <rect x="15" y="55" width="16" height="30" rx="4" />
-          <rect x="42" y="35" width="16" height="50" rx="4" />
-          <rect x="69" y="15" width="16" height="70" rx="4" />
-          <circle cx="77" cy="23" r="5" class="text-[#14171a]"/>
-        </svg>
-        <span class="font-bold text-lg tracking-wide">Factory Manager Pro</span>
-      </div>
-      <div id="auth-actions" class="hidden space-x-2">
-        <button id="btn-refresh" class="text-xs bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded-lg transition"><i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh</button>
-        <button id="btn-signout" class="text-xs bg-red-950 text-red-400 hover:bg-red-900 px-3 py-1.5 rounded-lg transition"><i class="fa-solid fa-right-from-bracket mr-1"></i> Sign Out</button>
-      </div>
-    </header>
+/* ---------- animated front screen ---------- */
+var cv=$('cv'),cx=cv.getContext('2d'),raf=0,cands=[],off=0,lt=0,N=44,mql=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)');
+function gen(){var p=cands.length?cands[cands.length-1].c:100,c=p+(Math.random()-.47)*5;return{o:p,c:c,h:Math.max(p,c)+Math.random()*2.5,l:Math.min(p,c)-Math.random()*2.5}}
+for(var i0=0;i0<N+2;i0++)cands.push(gen());
+function draw(){
+var dpr=window.devicePixelRatio||1,W=innerWidth,H=innerHeight;
+if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr)}
+cx.setTransform(dpr,0,0,dpr,0,0);cx.clearRect(0,0,W,H);
+var mn=1e9,mx=-1e9;cands.forEach(function(k){mn=Math.min(mn,k.l);mx=Math.max(mx,k.h)});
+var top=H*.14,bot=H*.9,cw=W/N;
+function y(v){return bot-(v-mn)/(mx-mn||1)*(bot-top)}
+cx.strokeStyle='rgba(255,255,255,.06)';cx.lineWidth=1;
+for(var g=1;g<6;g++){var gy=H*g/6;cx.beginPath();cx.moveTo(0,gy);cx.lineTo(W,gy);cx.stroke()}
+cands.forEach(function(k,i){var x=i*cw-off+cw/2,up=k.c>=k.o;
+cx.strokeStyle=cx.fillStyle=up?'rgba(76,209,133,.5)':'rgba(255,107,97,.5)';
+cx.beginPath();cx.moveTo(x,y(k.h));cx.lineTo(x,y(k.l));cx.stroke();
+var yo=y(k.o),yc=y(k.c);cx.fillRect(x-cw*.28,Math.min(yo,yc),cw*.56,Math.max(2,Math.abs(yo-yc)))});
+cx.strokeStyle='rgba(245,184,0,.8)';cx.lineWidth=2;cx.beginPath();
+cands.forEach(function(k,i){var s=0,n=0;for(var j=Math.max(0,i-7);j<=i;j++){s+=cands[j].c;n++}var x=i*cw-off+cw/2,yy=y(s/n);if(i)cx.lineTo(x,yy);else cx.moveTo(x,yy)});
+cx.stroke();}
+function loop(ts){
+var dt=lt?Math.min(ts-lt,60):16;lt=ts;var cw=innerWidth/N;off+=dt*cw/900;
+if(off>=cw){off-=cw;cands.shift();cands.push(gen())}
+draw();raf=requestAnimationFrame(loop)}
+function anim(){if(mql&&mql.matches){draw();return}if(!raf){lt=0;raf=requestAnimationFrame(loop)}}
+window.addEventListener('resize',function(){draw()});
 
-    <!-- MAIN VIEW CONTAINER -->
-    <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full">
-      
-      <!-- VIEW 1: OWNER LOGIN -->
-      <section id="view-login" class="max-w-md mx-auto my-12 bg-[#191c1f] border border-gray-800 rounded-2xl p-6 shadow-xl">
-        <div class="text-center mb-6">
-          <i class="fa-solid fa-sliders text-4xl text-amber-500 mb-2"></i>
-          <h2 class="text-xl font-bold">Owner Login</h2>
-          <p class="text-gray-400 text-sm mt-1">Access your control panel system</p>
-        </div>
-        <form id="login-form" class="space-y-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
-            <input type="email" id="login-email" value="sagorahammad007@gmail.com" class="w-full bg-[#14171a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 transition" required>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Password</label>
-            <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-[#14171a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-amber-500 transition" required>
-          </div>
-          <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition duration-200">Sign In</button>
-        </form>
-      </section>
+/* ---------- views ---------- */
+function kpi(c){var m=today().slice(0,7),i=0,e=0;c.led.forEach(function(r){if(r.d.slice(0,7)===m){i+=num(r.inc);e+=num(r.exp)}});return{net:i-e,n:c.stk.length}}
+function tickHtml(){var tk='';D.companies.forEach(function(c){var k=kpi(c);tk+='<span class="ti"><b>'+esc(c.name)+'</b> <i class="'+(k.net>=0?'pos':'neg')+'">'+(k.net>=0?'▲':'▼')+' '+money(Math.abs(k.net))+'</i><u>'+k.n+' items</u></span>'});return '<div class="trk">'+tk+tk+'</div>'}
+function vCo(){
+var tk='',h='<h2 class="ct">Your companies<small>Tap a company to open it</small></h2>';
+h+='<button class="btn alt sm" data-a="go" data-v="acct" style="margin-bottom:10px">⚙ Account &amp; security</button>';
+if(CLOUDMODE&&!D.companies.length)h+='<p class="note">No companies yet. Add one below.</p>';
+D.companies.forEach(function(c){var k=kpi(c);tk+='<span class="ti"><b>'+esc(c.name)+'</b> <i class="'+(k.net>=0?'pos':'neg')+'">'+(k.net>=0?'▲':'▼')+' '+money(Math.abs(k.net))+'</i><u>'+k.n+' items</u></span>'});
 
-      <!-- VIEW 2: ADMIN CONTROL PANEL -->
-      <section id="view-admin" class="hidden space-y-6">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-800 pb-4">
-          <div>
-            <h1 class="text-2xl font-bold flex items-center gap-2"><i class="fa-solid fa-gear text-amber-500"></i> Admin Control Panel</h1>
-            <p class="text-gray-400 text-sm">Real-time factory metrics and client management.</p>
-          </div>
-          <button id="btn-open-scanner" class="bg-amber-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl hover:bg-amber-600 transition flex items-center gap-2">
-            <i class="fa-solid fa-qrcode"></i> Scan Barcode / QR
-          </button>
-        </div>
+D.companies.forEach(function(c){var k=kpi(c);
+h+='<div class="card co" data-a="open" data-id="'+c.id+'" data-lp="5000" data-lpa="codel"><div class="nm">'+esc(c.name)+'</div><div class="kp"><span class="'+(k.net>=0?'pos':'neg')+'">'+(k.net>=0?'▲':'▼')+' '+money(Math.abs(k.net))+'</span> this month · '+k.n+' stock items</div></div>'});
+h+='<details class="card"><summary>+ Add a new company</summary><input id="nc" placeholder="Company name"><button class="btn full" data-a="addco">Add company</button></details>';
+h+='<h3>Backup</h3><div class="g2"><button class="btn alt" data-a="bak">Save backup file</button><button class="btn alt" data-a="rst">Restore backup</button></div><p class="'+(bakInfo().bad?'neg':'note')+'">'+bakInfo().txt+'. '+(CLOUDMODE?'Your data is saved in the cloud and shared between devices. Still keep backup files in a safe place.':'Data is kept on this phone only. Save a backup file regularly. Clearing browser data or uninstalling the app deletes it.')+'</p>';
+return h}
 
-        <!-- Metrics -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-[#191c1f] border border-gray-800 rounded-2xl p-6 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Total Clients</p>
-              <h3 id="count-total-clients" class="text-4xl font-extrabold mt-1 text-white">0</h3>
-            </div>
-            <div class="bg-blue-950/50 p-4 rounded-xl text-blue-400 text-2xl"><i class="fa-solid fa-users"></i></div>
-          </div>
-          
-          <div class="bg-[#191c1f] border border-gray-800 rounded-2xl p-6 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-gray-400 uppercase tracking-wider">Pending Approval</p>
-              <h3 id="count-pending-clients" class="text-4xl font-extrabold mt-1 text-amber-500">0</h3>
-            </div>
-            <div class="bg-amber-950/50 p-4 rounded-xl text-amber-500 text-2xl"><i class="fa-solid fa-clock"></i></div>
-          </div>
-        </div>
+function vHome(){
+function b(v,t,s){return '<button class="big" data-a="go" data-v="'+v+'">'+t+'<small>'+s+'</small></button>'}
+return '<h2>'+esc(C().name)+'</h2>'+b('acc','Accounts','Daily income &amp; expense, and factory debt')+b('stk','Stock inventory','Stock, sell with invoice, and total stock')+b('wrk','Worker data','Workers, attendance and salary')+b('day','Date report','See everything for any specific date')}
 
-        <!-- Client Management Table -->
-        <div class="bg-[#191c1f] border border-gray-800 rounded-2xl p-6">
-          <h3 class="text-lg font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-gray-400"></i> Client Management</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="border-b border-gray-800 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  <th class="pb-3">Client Info</th>
-                  <th class="pb-3">Factory Target</th>
-                  <th class="pb-3">Status</th>
-                  <th class="pb-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="client-table-body" class="text-sm divide-y divide-gray-800/50">
-                <tr>
-                  <td colspan="4" class="py-8 text-center text-gray-500"><i class="fa-solid fa-spinner animate-spin mr-2"></i> Loading client rosters...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+function tabs(arr,cur,act){return '<div class="tabs">'+arr.map(function(a){var p=a.split(':');return '<button class="tab'+(cur===p[0]?' on':'')+'" data-a="'+act+'" data-t="'+p[0]+'">'+p[1]+'</button>'}).join('')+'</div>'}
 
-      <!-- VIEW 3: SCANNER INTERFACE -->
-      <section id="view-scanner" class="hidden max-w-lg mx-auto bg-[#191c1f] border border-gray-800 rounded-2xl p-6 relative">
-        <button id="btn-close-scanner" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
-        <div class="text-center mb-6">
-          <h2 class="text-xl font-bold flex items-center justify-center gap-2"><i class="fa-solid fa-barcode text-amber-500"></i> Scan Barcode / QR</h2>
-          <p class="text-gray-400 text-sm mt-1">Hold structural label up to your camera tracking window</p>
-        </div>
-        <div class="relative aspect-video w-full bg-black rounded-xl overflow-hidden border border-gray-700 flex items-center justify-center">
-          <div class="absolute inset-8 border-2 border-dashed border-amber-500/40 rounded-lg pointer-events-none animate-pulse"></div>
-          <video id="scanner-video" class="w-full h-full object-cover hidden"></video>
-          <div id="scanner-fallback" class="text-center p-4">
-            <i class="fa-solid fa-camera text-3xl text-gray-600 mb-2"></i>
-            <p class="text-xs text-gray-500">Camera hardware interface active</p>
-          </div>
-        </div>
-        <div id="scan-result" class="mt-4 p-3 bg-gray-950 rounded-xl text-xs font-mono text-amber-400 break-all hidden"></div>
-      </section>
+/* accounts */
+function vAcc(){return '<h2>Accounts</h2>'+tabs(['inc:Daily income &amp; expense','debt:Factory debt'],S.atab,'atab')+(S.atab==='inc'?ledHtml():debtHtml())}
+function ledHtml(){return '<input id="lq" placeholder="Search notes, amounts or dates (any part of a word)..." value="'+esc(S.lq)+'" autocomplete="off" style="margin-bottom:10px"><div id="lr">'+ledBody()+'</div>'}
+function ledSearch(){
+var c=C(),terms=S.lq.trim().toLowerCase().split(/\s+/);
+var rows=c.led.map(function(r,i){return{r:r,i:i}}).filter(function(x){var r=x.r,txt=((r.note||'')+' '+r.d+' '+dmy(r.d)+' '+(r.inc===''?'':r.inc)+' '+(r.exp===''?'':r.exp)).toLowerCase();return terms.every(function(t){return txt.indexOf(t)>-1})}).sort(function(a,b){return a.r.d<b.r.d?1:a.r.d>b.r.d?-1:b.i-a.i});
+var ti=0,te=0,body='';
+rows.forEach(function(x){var r=x.r;ti+=num(r.inc);te+=num(r.exp);
+body+='<tr><td><input type="date" value="'+esc(r.d)+'" data-f="d" data-k="led" data-id="'+r.id+'"></td><td><input value="'+esc(r.note)+'" placeholder="Where from / spent on" data-f="note" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.inc)+'" data-f="inc" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.exp)+'" data-f="exp" data-k="led" data-id="'+r.id+'"></td><td><button class="x" data-a="del" data-k="led" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='led'+r.id?'?':'×')+'</button></td></tr>'});
+return '<div class="tiles"><div class="tile"><small>Found</small><b>'+rows.length+' rows</b></div><div class="tile"><small>Income</small><b class="pos">'+money(ti)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(te)+'</b></div></div><div class="sheet"><table style="min-width:560px"><tr><th style="width:140px">Date</th><th>Note</th><th style="width:110px">Income ৳</th><th style="width:110px">Expense ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="5" class="r" style="text-align:left">Nothing found.</td></tr>')+'</table></div><p class="note">Showing matches from all months. Clear the search box to go back to the date-wise sheet.</p>'}
+function ledBody(){
+if(S.lq.trim())return ledSearch();
+var c=C(),f=S.ld,m=f?f.slice(0,7):S.month,start=f||(m+'-01'),open=0;
+c.led.forEach(function(r){if(r.d<start)open+=num(r.inc)-num(r.exp)});
+var rows=c.led.map(function(r,i){return{r:r,i:i}}).filter(function(x){return f?x.r.d===f:x.r.d.slice(0,7)===m}).sort(function(a,b){return a.r.d<b.r.d?-1:a.r.d>b.r.d?1:a.i-b.i});
+var run=open,ti=0,te=0,days={},body='';
+rows.forEach(function(x){var r=x.r;ti+=num(r.inc);te+=num(r.exp);run+=num(r.inc)-num(r.exp);x.bal=run;var g=days[r.d]||(days[r.d]={i:0,e:0,bal:0,rows:[]});g.i+=num(r.inc);g.e+=num(r.exp);g.bal=run;g.rows.push(x)});
+Object.keys(days).sort().reverse().forEach(function(d){var g=days[d];
+body+='<tr class="tot"><td colspan="2">'+dmy(d)+' · day total</td><td class="r pos">'+money(g.i)+'</td><td class="r neg">'+money(g.e)+'</td><td class="r">'+money(g.bal)+'</td><td></td></tr>';
+g.rows.slice().reverse().forEach(function(x){var r=x.r;
+body+='<tr><td><input type="date" value="'+esc(r.d)+'" data-f="d" data-k="led" data-id="'+r.id+'"></td><td><input value="'+esc(r.note)+'" placeholder="Where from / spent on" data-f="note" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.inc)+'" data-f="inc" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.exp)+'" data-f="exp" data-k="led" data-id="'+r.id+'"></td><td class="r '+(x.bal<0?'neg':'')+'">'+money(x.bal)+'</td><td><button class="x" data-a="del" data-k="led" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='led'+r.id?'?':'×')+'</button></td></tr>'})});
+return '<div class="g2"><div><label>Month</label><input type="month" id="mo" value="'+m+'"></div><div><label>Show one date only</label><input type="date" id="ldf" value="'+esc(f)+'"></div></div>'+(f?'<button class="btn alt sm" data-a="ldclr" style="margin-top:6px">Show whole month</button>':'')
++'<div class="tiles"><div class="tile"><small>Income</small><b class="pos">'+money(ti)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(te)+'</b></div><div class="tile"><small>Balance</small><b>'+money(open+ti-te)+'</b></div></div>'
++'<button class="btn full" data-a="addrow" style="margin:0 0 10px">+ Add row</button>'
++'<div class="sheet"><table><tr><th style="width:140px">Date</th><th>Note (from / to)</th><th style="width:110px">Income ৳</th><th style="width:110px">Expense ৳</th><th style="width:120px">Balance</th><th style="width:40px"></th></tr>'
++'<tr class="tot"><td colspan="2">Total '+(f?dmy(f):m)+'</td><td class="r">'+money(ti)+'</td><td class="r">'+money(te)+'</td><td class="r">'+money(open+ti-te)+'</td><td></td></tr>'+body
++'<tr class="tot"><td colspan="4">Opening balance (before '+(f?dmy(f):dmy(start))+')</td><td class="r">'+money(open)+'</td><td></td></tr></table></div><p class="note">Entries are grouped by date, newest date first. A new row appears at the top. Tap a cell to edit. Tap × twice to delete a row.</p>'}
 
-    </main>
+function debtHtml(){return '<input id="dq" placeholder="Search supplier or material..." value="'+esc(S.dq)+'"><button class="btn full" data-a="adddebt" style="margin:10px 0">+ Add row</button><div id="dt">'+debtTable(C())+'</div>'}
+function debtTable(c){
+var q=S.dq.trim().toLowerCase(),tp=0,tpd=0,body='';
+var a=c.debt.slice().reverse().filter(function(r){return !q||((r.sup||'')+' '+(r.item||'')).toLowerCase().indexOf(q)>-1}).sort(function(x,y){return x.d<y.d?1:x.d>y.d?-1:0});
+a.forEach(function(r){tp+=num(r.price);tpd+=num(r.paid);var left=num(r.price)-num(r.paid);
+function f(k,t,ph){return '<td><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+'value="'+esc(r[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="debt" data-id="'+r.id+'"></td>'}
+body+='<tr>'+f('d','date')+f('sup','','Supplier')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(r.unit==='ton'?'':' selected')+'>kg</option><option'+(r.unit==='ton'?' selected':'')+'>ton</option></select></div></td>'+f('price','number')+f('paid','number')+'<td class="r '+(left>0?'neg':'')+'">'+money(left)+'</td><td><button class="x" data-a="del" data-k="debt" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='debt'+r.id?'?':'×')+'</button></td></tr>'});
+var g={};c.debt.forEach(function(r){var k=(r.sup||'(no name)').trim().toLowerCase();if(!g[k])g[k]={n:(r.sup||'(no name)').trim(),p:0,d:0};g[k].p+=num(r.price);g[k].d+=num(r.paid)});
+var gs=Object.keys(g).map(function(k){return g[k]}).filter(function(x){return !q||x.n.toLowerCase().indexOf(q)>-1}),sb='';
+gs.forEach(function(x){sb+='<tr><td class="r" style="text-align:left">'+esc(x.n)+'</td><td class="r">'+money(x.p)+'</td><td class="r">'+money(x.d)+'</td><td class="r '+(x.p-x.d>0?'neg':'')+'"><b>'+money(x.p-x.d)+'</b></td></tr>'});
+return '<div class="tiles"><div class="tile"><small>Total price</small><b>'+money(tp)+'</b></div><div class="tile"><small>Paid</small><b class="pos">'+money(tpd)+'</b></div><div class="tile"><small>Left to pay</small><b class="neg">'+money(tp-tpd)+'</b></div></div>'
++'<div class="sheet"><table style="min-width:900px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:160px">Quantity (kg / ton)</th><th style="width:110px">Price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="8" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
++'<h3>By supplier</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Total</th><th>Paid</th><th>Left</th></tr>'+(sb||'<tr><td colspan="4" class="r" style="text-align:left">No suppliers yet.</td></tr>')+'</table></div><p class="note">When you pay a supplier later, change the Paid cell. Left is calculated for you.</p>'}
 
-    <!-- FOOTER -->
-    <footer class="border-t border-gray-800 bg-[#14171a] p-4 text-center text-xs text-gray-500">
-      &copy; 2026 Factory Manager Pro. Integrated with Firebase Storage & Hosting.
-    </footer>
-  </div>
+/* stock */
+function vStk(){return '<h2>Stock inventory</h2>'+tabs(['stock:Stock','sell:Sell','total:Total stock'],S.tab,'tab')+(S.tab==='stock'?stockTab():S.tab==='sell'?sellTab():totalTab())}
+function lastMv(c,id){for(var i=c.mov.length-1;i>=0;i--)if(c.mov[i].pid===id){var m=c.mov[i];return dmy(m.d)+': '+TYPES[m.type]+' '+(m.delta>0?'+':'−')+Math.abs(m.delta)}return ''}
+function stockTab(){var nt=S.sd!==today()?'<p class="note" style="color:var(--accent)">Entering stock for '+dmy(S.sd)+'. Set the date back to today for today’s entries.</p>':'';return '<div class="card"><label class="note">Stock entry date (pick an earlier day to add forgotten stock)</label><input type="date" id="sd" value="'+S.sd+'">'+nt+'</div><input id="q" placeholder="Search product..." value="'+esc(S.q)+'" autocomplete="off"><details class="card" style="margin-top:10px"><summary>+ Add new item</summary><div class="g2"><div><label>Item name</label><input id="sn" placeholder="e.g. PP granules, Red color"></div><div><label>Unit</label><input id="su" placeholder="kg, bag, pcs"></div></div><label class="note">Type</label><select id="sk"><option value="product">Product (counts as production)</option><option value="raw">Raw material</option></select><label class="note">Starting quantity</label><input id="sq0" type="number" inputmode="decimal" placeholder="0"><button class="btn full" data-a="addstk">Add item</button></details><div id="sl">'+stkList(C())+'</div>'+stkEntries(C())}
+function stkEntries(c){
+var a=c.mov.filter(function(m){return m.d===S.sd});
+return '<h3>Stock entries on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.note?' · '+esc(m.note):'')+'</small></div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No stock entries on this date.</p>')}
+function stkList(c){
+var q=S.q.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1});
+if(!a.length)return '<p class="note">'+(c.stk.length?'No product matches.':'No items yet. Add your first item above.')+'</p>';
+return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div><div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small><button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div></div>'}).join('')}
 
-  <!-- Firebase Scripts Bundle -->
-  <script type="module">
-    import { initializeApp } from "https://gstatic.com";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://gstatic.com";
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc } from "https://gstatic.com";
+function sellRes(c){
+var q=S.sq.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1}).slice(0,8);
+if(!c.stk.length)return '<p class="note">Add products in the Stock tab first.</p>';
+return a.length?a.map(function(i){return '<button class="chip" data-a="addline" data-id="'+i.id+'">'+esc(i.name)+'<small>'+esc(num(i.qty))+' '+esc(i.unit)+'</small></button>'}).join(''):'<p class="note">No product matches.</p>'}
+function sellTab(){
+var c=C(),h='<input id="sq" placeholder="Search product to sell..." value="'+esc(S.sq)+'" autocomplete="off"><div id="sr" style="margin-top:8px">'+sellRes(c)+'</div><h3>New invoice</h3><div class="card" id="cartbox">'+cartHtml(c)+'</div><h3>Recent invoices</h3>';
+if(!c.sal.length)h+='<p class="note">No invoices yet.</p>';
+c.sal.slice(0,20).forEach(function(s){var t=saleTotal(s),d=t-s.paid;h+='<div class="item" data-a="openinv" data-id="'+s.id+'"><div><b>'+esc(s.no)+' · '+esc(s.cust||'Walk-in')+'</b><br><small>'+esc(dmy(s.d))+'</small></div><div style="text-align:right"><b>'+money(t)+'</b><br>'+(d>0?'<span class="due">Due '+money(d)+'</span>':'<small>Paid</small>')+'</div></div>'});
+return h}
+function cartHtml(c){
+var k=S.cart,h='<div class="g2"><div><label>Date</label><input type="date" data-c="d" value="'+esc(k.d)+'"></div><div><label>Customer name</label><input data-c="cust" value="'+esc(k.cust)+'" placeholder="Walk-in customer"></div></div><label class="note">Customer phone (WhatsApp)</label><input data-c="phone" inputmode="tel" value="'+esc(k.phone)+'" placeholder="01XXXXXXXXX">';
+if(!k.lines.length)h+='<p class="note">Search a product above and tap it to add it here.</p>';
+k.lines.forEach(function(l,i){var it=item(c,l.pid);if(!it)return;
+h+='<div class="ln"><b>'+esc(it.name)+'</b> <small class="note">in stock: '+esc(num(it.qty))+' '+esc(it.unit)+'</small><div class="g3"><div><label>Qty ('+esc(it.unit)+')</label><input type="number" inputmode="decimal" data-c="lq" data-i="'+i+'" value="'+esc(l.qty)+'"></div><div><label>Price per '+esc(it.unit)+' ৳</label><input type="number" inputmode="decimal" data-c="lp" data-i="'+i+'" value="'+esc(l.price)+'"></div><div class="lt" id="lt'+i+'">'+money(num(l.qty)*num(l.price))+'</div></div><button class="x" data-a="rmline" data-i="'+i+'" aria-label="Remove">×</button></div>'});
+return h+'<div class="tot"><span>Total</span><span id="ct">'+money(cartTotal())+'</span></div><label class="note">Amount received (৳)</label><input type="number" inputmode="decimal" data-c="paid" value="'+esc(k.paid)+'" placeholder="0"><div class="tot"><span>Due</span><span id="cdue">'+money(cartTotal()-num(k.paid))+'</span></div><button class="btn full" data-a="savesale">Save &amp; make invoice</button>'}
+function cartTotal(){return S.cart.lines.reduce(function(a,l){return a+num(l.qty)*num(l.price)},0)}
+function cartSet(t){
+var k=S.cart,f=t.dataset.c;
+if(f==='lq'||f==='lp'){var l=k.lines[+t.dataset.i];if(!l)return;l[f==='lq'?'qty':'price']=t.value;var e=$('lt'+t.dataset.i);if(e)e.textContent=money(num(l.qty)*num(l.price))}
+else k[f]=t.value;
+$('ct').textContent=money(cartTotal());$('cdue').textContent=money(cartTotal()-num(k.paid))}
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDYi-nU1YZ4VSwXjxJem0TWei9q8PD-yEg",
-      authDomain: "://firebaseapp.com",
-      projectId: "factory-manager-4ca82",
-      storageBucket: "factory-manager-4ca82.firebasestorage.app",
-      messagingSenderId: "153412827372",
-      appId: "1:153412827372:web:197eee5bc21db7a7fe8dc9",
-      measurementId: "G-8LQJP78HV0"
-    };
+function unitKey(u){var k=String(u||'').trim().toLowerCase().replace(/\s+/g,' ');if(k.length>2&&k.charAt(k.length-1)==='s'&&k.slice(-2)!=='ss')k=k.slice(0,-1);return k||'units'}
+function isAdd(m){return m.type==='in'||m.type==='open'||(m.type==='set'&&m.delta>0)}
+function legacy(c,it){var s=0;c.mov.forEach(function(m){if(m.pid===it.id)s+=m.delta});var b=num(it.qty)-s;return b>0.000001?Math.round(b*1e6)/1e6:0}
+function soldOut(c,it){return c.mov.reduce(function(s,m){return s+(m.pid===it.id&&(m.type==='sale'||m.type==='out')?-m.delta:0)},0)}
+function prod(c,it,fn){return c.mov.reduce(function(s,m){return s+(m.pid===it.id&&isAdd(m)&&fn(m.d)?m.delta:0)},0)}
+function regFor(c,items){
+var ids={},base=0,days={};
+items.forEach(function(it){ids[it.id]=1;base+=legacy(c,it)});
+c.mov.forEach(function(m){if(!ids[m.pid])return;var o=days[m.d]||(days[m.d]={p:0,s:0});if(isAdd(m))o.p+=m.delta;else if(m.delta<0)o.s-=m.delta});
+return{base:base,days:days}}
+function regAt(r,D){
+var o=r.base,p=0,s=0;
+Object.keys(r.days).forEach(function(k){var x=r.days[k];if(k<D)o+=x.p-x.s;else if(k===D){p=x.p;s=x.s}});
+return{o:o,p:p,s:s,tot:o+p,end:o+p-s}}
+function regMonth(r,D){var m=0;Object.keys(r.days).forEach(function(k){if(k.slice(0,7)===D.slice(0,7))m+=r.days[k].p});return m}
+function totalTab(){
+var c=C(),d=S.td,t=today();
+if(!c.stk.length)return '<h3>Total stock</h3><p class="note">No stock yet. Add items in the Stock tab.</p>';
+var U={};
+c.stk.forEach(function(i){var u=unitKey(i.unit),o=U[u]||(U[u]={prod:[],all:[]});o.all.push(i);if(i.kind!=='raw')o.prod.push(i)});
+var us=Object.keys(U),R={};
+us.forEach(function(u){var rg=regFor(c,U[u].prod),r=regAt(rg,d),stock=0;U[u].all.forEach(function(i){stock+=qtyAt(c,i,d)});R[u]={day:r.p,mon:regMonth(rg,d),stock:stock,all:r.tot,o:r.o,s:r.s}});
+function blk(title,key,cls,sub){return '<div class="card"><small class="note" style="text-transform:uppercase;font-weight:600">'+title+'</small><div class="q '+cls+'">'+us.map(function(u){return R[u][key]+' '+esc(u)}).join(' · ')+'</div>'+(sub?'<small class="note">'+us.map(function(u){return sub(R[u],u)}).join(' · ')+'</small>':'')+'</div>'}
+var now=d===t;
+var h='<label class="note">Production date (starts on today)</label><input type="date" id="td" value="'+d+'" style="margin-bottom:10px">';
+h+=blk((now?'1. Today’s production':'1. Production on')+' ('+dmy(d)+')','day','pos')
++blk('2. In stock total'+(now?'':' (end of '+dmy(d)+')'),'stock','',function(r,u){return 'Total '+r.all+' − sold/out '+r.s+(r.stock!==r.all-r.s?' (raw materials included)':'')})
++blk('3. Total production of this month ('+d.slice(0,7)+')','mon','pos')
++blk('4. Total production '+(now?'till today':'till '+dmy(d))+' by factory','all','pos',function(r,u){return 'Opening stock '+r.o+' + produced '+r.day});
+h+='<h3>By item</h3><div class="sheet"><table style="min-width:900px"><tr><th>Item</th><th>Unit</th><th>Opening stock</th><th>Produced '+dmy(d)+'</th><th>Total till '+(now?'today':dmy(d))+' by factory</th><th>Sold / out</th><th>In stock</th><th>Produced '+d.slice(0,7)+'</th></tr>';
+c.stk.forEach(function(i){var raw=i.kind==='raw',rg=regFor(c,[i]),r=regAt(rg,d);
+h+='<tr><td class="r" style="text-align:left">'+esc(i.name)+(raw?' <small class="note">(raw)</small>':'')+'</td><td class="r">'+esc(i.unit)+'</td><td class="r">'+(raw?'-':r.o)+'</td><td class="r">'+(raw?'-':r.p)+'</td><td class="r">'+(raw?'-':r.tot)+'</td><td class="r">'+(raw?'-':r.s)+'</td><td class="r"><b>'+qtyAt(c,i,d)+'</b></td><td class="r">'+(raw?'-':regMonth(rg,d))+'</td></tr>'});
+h+='</table></div>';
+us.forEach(function(u){
+if(!U[u].prod.length)return;
+var rg=regFor(c,U[u].prod),ds=Object.keys(rg.days).sort(),run=rg.base,rows=[];
+if(rg.base>0)rows.push('<tr><td class="r" style="text-align:left">Earlier stock</td><td class="r">-</td><td class="r">-</td><td class="r">'+rg.base+'</td><td class="r">-</td><td class="r"><b>'+rg.base+'</b></td></tr>');
+ds.forEach(function(k){var x=rg.days[k],tot=run+x.p,end=tot-x.s;
+rows.push('<tr><td class="r" style="text-align:left">'+dmy(k)+'</td><td class="r">'+run+'</td><td class="r pos">'+(x.p||'-')+'</td><td class="r"><b>'+tot+'</b></td><td class="r neg">'+(x.s||'-')+'</td><td class="r"><b>'+end+' '+esc(u)+'</b></td></tr>');run=end});
+if(!rows.length)return;
+h+='<h3>Daily stock register ('+esc(u)+')</h3><div class="sheet"><table style="min-width:560px"><tr><th>Date</th><th>Opening stock</th><th>Produced</th><th>Total (opening + produced)</th><th>Sold / out</th><th>Closing stock</th></tr>'+rows.reverse().join('')+'</table></div>'});
+return h+'<p class="note">Total production till today by factory = opening stock (yesterday’s closing stock) + today’s production. Selling or “− Out” never changes it and only lowers In stock. In stock = opening stock + produced − sold / out. Raw materials are not counted in production. This page is calculated, so it cannot be edited.</p>'}
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+function vInv(){
+var c=C(),s=c.sal.filter(function(x){return x.id===S.inv})[0];
+if(!s)return '<p class="note">Invoice not found.</p>';
+var t=saleTotal(s),rows=s.lines.map(function(l){return '<tr><td>'+esc(l.name)+'</td><td class="r">'+l.qty+' '+esc(l.unit)+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+money(l.qty*l.price)+'</td></tr>'}).join('');
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>INVOICE</div><div class="rm"><span>No: '+esc(s.no)+'</span><span>Date: '+esc(dmy(s.d))+'</span></div><div><b>Customer:</b> '+esc(s.cust||'Walk-in customer')+(s.phone?' ('+esc(s.phone)+')':'')+'</div><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr>'+rows+'</table><div class="rt"><div><span>Total</span><span>'+money(t)+'</span></div><div><span>Received</span><span>'+money(s.paid)+'</span></div><div class="gt"><span>Due</span><span>'+money(t-s.paid)+'</span></div></div><p style="text-align:center;color:#555;font-size:12px;margin-top:14px">Thank you for your business.</p></div>'
++'<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn wa" style="background:#25d366" data-a="wa">Send on WhatsApp</button><button class="btn alt" data-a="back">Back to sales</button><button class="btn alt" data-a="delinv">'+(S.arm==='inv'?'Tap again to delete (stock is returned)':'Delete invoice')+'</button></div><p class="note">For a PDF, choose “Save as PDF” in the print window, then attach it in WhatsApp.</p>'}
 
-    const viewLogin = document.getElementById('view-login');
-    const viewAdmin = document.getElementById('view-admin');
-    const viewScanner = document.getElementById('view-scanner');
-    const authActions = document.getElementById('auth-actions');
-    const clientTableBody = document.getElementById('client-table-body');
+/* workers */
+function status(c,d,id){return (c.att[d]||{})[id]||''}
+function earned(c,w){var e=0,t=today(),dd=0;Object.keys(c.att).forEach(function(k){if(k>t)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});return{days:dd,earn:e}}
+function advOf(c,id){return c.adv.filter(function(a){return a.wid===id}).reduce(function(s,a){return s+num(a.amt)},0)}
+function vWrk(){
+var c=C(),h='<h2>Worker data</h2><input id="wsq" placeholder="Search worker by name, phone or role..." value="'+esc(S.wsq)+'" autocomplete="off"><div id="wsr" style="margin:8px 0">'+wsRes(c)+'</div>'+tabs(['info:Workers','att:Attendance','sal:Salary'],S.wtab,'wtab');
+if(S.wtab==='info'){
+h+='<button class="btn full" style="margin:0 0 12px" data-a="addw">+ Add worker</button>';
+if(!c.wrk.length)h+='<p class="note">No workers yet.</p>';
+c.wrk.forEach(function(w){
+function f(k,l,t,ph){return '<div class="f"><label>'+l+'</label><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+'value="'+esc(w[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="wrk" data-id="'+w.id+'"></div>'}
+h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('joined','Joining date','date')+f('note','Address / note')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
+return h+'<p class="note">Salary is monthly. The daily amount is worked out from attendance: monthly salary ÷ days in that month, for each day present.</p>'}
+if(S.wtab==='att')return h+attHtml(c);
+return h+salHtml(c)}
+function attHtml(c){
+var d=S.date,day=c.att[d]||{},h='<input type="date" id="ad" value="'+d+'"><button class="btn alt full" style="margin:8px 0" data-a="allp">Mark all present</button>';
+if(!c.wrk.length)h+='<p class="note">Add workers first in the Workers tab.</p>';
+var n={P:0,A:0,L:0,H:0};
+c.wrk.forEach(function(w,i){var s=day[w.id];if(s)n[s]++;
+h+='<div class="arow"><div data-lp="2000" data-lpa="mv" data-id="'+w.id+'" style="flex:1;min-width:0"><b>'+esc(w.name||'(no name)')+'</b></div>'
++(S.mv===w.id?'<div class="mvb"><button data-a="mvup" data-id="'+w.id+'" aria-label="Move up">▲</button><button data-a="mvdn" data-id="'+w.id+'" aria-label="Move down">▼</button><button data-a="mvend" aria-label="Done">✓</button></div>':'<div class="s">'+['P','A','L','H'].map(function(x){return '<button data-a="att" data-w="'+w.id+'" data-s="'+x+'" class="'+(s===x?'on':'')+'">'+x+'</button>'}).join('')+'</div>')+'</div>'});
+h+='<p class="note">P = Present, A = Absent, L = Leave, H = Half day. Tap again to clear. To change the order, press and hold a name for 2 seconds, then use ▲ ▼.</p>';
+h+='<div class="tiles" style="grid-template-columns:repeat(auto-fit,minmax(90px,1fr))"><div class="tile"><small>Total workers</small><b>'+c.wrk.length+'</b></div><div class="tile"><small>Present</small><b class="pos">'+n.P+'</b></div><div class="tile"><small>Half day</small><b>'+n.H+'</b></div><div class="tile"><small>Absent</small><b class="neg">'+n.A+'</b></div><div class="tile"><small>Leave</small><b>'+n.L+'</b></div></div>';
+var m=d.slice(0,7);
+h+='<h3>Month summary: '+m+'</h3><div class="sheet"><table style="min-width:520px"><tr><th>Worker</th><th>P</th><th>H</th><th>A</th><th>L</th><th>Earned ৳</th></tr>';
+c.wrk.forEach(function(w){var k={P:0,A:0,L:0,H:0};
+Object.keys(c.att).forEach(function(x){if(x.slice(0,7)===m&&c.att[x][w.id])k[c.att[x][w.id]]++});
+h+='<tr><td class="r" style="text-align:left">'+esc(w.name)+'</td><td class="r">'+k.P+'</td><td class="r">'+k.H+'</td><td class="r">'+k.A+'</td><td class="r">'+k.L+'</td><td class="r"><b>'+money((k.P+k.H/2)*num(w.wage)/daysIn(m))+'</b></td></tr>'});
+return h+'</table></div>'}
+function salHtml(c){
+var h='<div class="sheet"><table style="min-width:600px"><tr><th>Worker</th><th>Days</th><th>Monthly</th><th>Earned</th><th>Advance</th><th>Due</th></tr>',te=0,ta=0;
+c.wrk.forEach(function(w){var e=earned(c,w),a=advOf(c,w.id);te+=e.earn;ta+=a;
+h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+e.days+'</td><td class="r">'+money(num(w.wage))+'</td><td class="r">'+money(e.earn)+'</td><td class="r">'+money(a)+'</td><td class="r '+(e.earn-a<0?'neg':'pos')+'"><b>'+money(e.earn-a)+'</b></td></tr>'});
+h+='<tr class="tot"><td colspan="3">Total</td><td class="r">'+money(te)+'</td><td class="r">'+money(ta)+'</td><td class="r">'+money(te-ta)+'</td></tr></table></div><p class="note">Earned = salary for the days present, up to today, from the attendance sheet. Due = Earned − Advance.</p>';
+h+='<h3>Give advance</h3><div class="card"><label class="note">Worker</label><select id="aw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2"><div><label>Date</label><input type="date" id="adt" value="'+today()+'"></div><div><label>Amount ৳</label><input type="number" inputmode="decimal" id="aam"></div></div><label class="note">Note (optional)</label><input id="ano"><button class="btn full" data-a="addadv">Save advance</button></div>';
+h+='<h3>Advance list</h3>';
+if(!c.adv.length)h+='<p class="note">No advances yet.</p>';
+c.adv.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(a){var w=c.wrk.filter(function(x){return x.id===a.wid})[0];
+h+='<div class="item"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+esc(dmy(a.d))+(a.note?' · '+esc(a.note):'')+'</small></div><div style="text-align:right"><b>'+money(num(a.amt))+'</b><br><button class="btn alt sm" data-a="del" data-k="adv" data-id="'+a.id+'">'+armLbl('adv'+a.id)+'</button></div></div>'});
+return h}
 
-    function showView(viewId) {
-      viewLogin.classList.add('hidden');
-      viewAdmin.classList.add('hidden');
-      viewScanner.classList.add('hidden');
-      if (viewId === 'login') viewLogin.classList.remove('hidden');
-      if (viewId === 'admin') viewAdmin.classList.remove('hidden');
-      if (viewId === 'scanner') viewScanner.classList.remove('hidden');
-    }
+function wsRes(c){
+var q=S.wsq.trim().toLowerCase();if(!q)return '';
+var a=c.wrk.filter(function(w){return ((w.name||'')+' '+(w.phone||'')+' '+(w.role||'')).toLowerCase().indexOf(q)>-1}).slice(0,8);
+return a.length?a.map(function(w){return '<button class="chip" data-a="wopen" data-id="'+w.id+'">'+esc(w.name||'(no name)')+'<small>'+esc(w.role||'')+'</small></button>'}).join(''):'<p class="note">No worker found.</p>'}
+function vWp(){
+var c=C(),w=c.wrk.filter(function(x){return x.id===S.wid})[0];
+if(!w)return '<p class="note">Worker not found.</p>';
+var e=earned(c,w),a=advOf(c,w.id),m=S.wm,ms={},days=[],n={P:0,A:0,L:0,H:0},NAME={P:'Present',A:'Absent',L:'Leave',H:'Half day'};
+Object.keys(c.att).sort().forEach(function(k){var s=c.att[k][w.id];if(!s)return;var mm=k.slice(0,7),o=ms[mm]||(ms[mm]={P:0,A:0,L:0,H:0});o[s]++;if(mm===m){n[s]++;days.push([k,s])}});
+var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div><div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+'</div>';
+h+='<div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Days present (all time)</small><b>'+e.days+'</b></div><div class="tile"><small>Earned till today</small><b>'+money(e.earn)+'</b></div><div class="tile"><small>Advance taken</small><b class="neg">'+money(a)+'</b></div><div class="tile"><small>Due</small><b class="'+(e.earn-a<0?'neg':'pos')+'">'+money(e.earn-a)+'</b></div></div>';
+var mk=Object.keys(ms).sort().reverse();
+h+='<h3>Attendance by month</h3><div class="sheet"><table style="min-width:480px"><tr><th>Month</th><th>P</th><th>H</th><th>A</th><th>L</th><th>Earned ৳</th></tr>'+(mk.length?mk.map(function(k){var o=ms[k];return '<tr><td class="r" style="text-align:left">'+k+'</td><td class="r">'+o.P+'</td><td class="r">'+o.H+'</td><td class="r">'+o.A+'</td><td class="r">'+o.L+'</td><td class="r"><b>'+money((o.P+o.H/2)*num(w.wage)/daysIn(k))+'</b></td></tr>'}).join(''):'<tr><td colspan="6" class="r" style="text-align:left">No attendance yet.</td></tr>')+'</table></div>';
+h+='<h3>Day by day</h3><input type="month" id="wm" value="'+m+'">';
+h+=days.length?'<div class="sheet" style="margin-top:8px"><table style="min-width:300px"><tr><th>Date</th><th>Status</th></tr>'+days.map(function(d){return '<tr><td class="r" style="text-align:left">'+dmy(d[0])+'</td><td class="r '+(d[1]==='P'?'pos':d[1]==='A'?'neg':'')+'">'+NAME[d[1]]+'</td></tr>'}).join('')+'</table></div><p class="note">This month: Present '+n.P+' · Half day '+n.H+' · Absent '+n.A+' · Leave '+n.L+'</p>':'<p class="note">No attendance marked in this month.</p>';
+var ad=c.adv.filter(function(x){return x.wid===w.id}).sort(function(x,y){return x.d<y.d?1:x.d>y.d?-1:0});
+h+='<h3>Advances</h3>'+(ad.length?ad.map(function(x){return '<div class="item"><div><b>'+esc(dmy(x.d))+'</b><br><small>'+esc(x.note||'')+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join(''):'<p class="note">No advances.</p>');
+return h}
 
-    document.getElementById('login-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('login-email').value;
-      const password = document.getElementById('login-password').value;
-      signInWithEmailAndPassword(auth, email, password).catch(err => alert("Login Error: " + err.message));
-    });
+/* date report */
+function qtyAt(c,it,d){var q=num(it.qty);c.mov.forEach(function(m){if(m.pid===it.id&&m.d>d)q-=m.delta});return q}
+function vDay(){
+var c=C(),d=S.rd,i=0,e=0,bal=0;
+c.led.forEach(function(r){if(r.d===d){i+=num(r.inc);e+=num(r.exp)}if(r.d<=d)bal+=num(r.inc)-num(r.exp)});
+var h='<h2>Date report</h2><input type="date" id="rd" value="'+d+'"><div class="tiles"><div class="tile"><small>Income</small><b class="pos">'+money(i)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(e)+'</b></div><div class="tile"><small>Balance to date</small><b>'+money(bal)+'</b></div></div>';
+h+='<h3>Income &amp; expense entries</h3>';
+var lr=c.led.filter(function(r){return r.d===d});
+h+=lr.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Note</th><th>Income</th><th>Expense</th></tr>'+lr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.note)+'</td><td class="r">'+money(num(r.inc))+'</td><td class="r">'+money(num(r.exp))+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>';
+var dr=c.debt.filter(function(r){return r.d===d});
+if(dr.length)h+='<h3>Factory debt entries</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Material</th><th>Quantity</th><th>Price</th><th>Paid</th></tr>'+dr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.sup)+'</td><td class="r">'+esc(r.item)+'</td><td class="r">'+(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-')+'</td><td class="r">'+money(num(r.price))+'</td><td class="r">'+money(num(r.paid))+'</td></tr>'}).join('')+'</table></div>';
+var mv=c.mov.filter(function(m){return m.d===d});
+h+='<h3>Stock movements</h3>'+(mv.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Item</th><th>Type</th><th>Qty</th></tr>'+mv.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(m.name)+'</td><td class="r">'+TYPES[m.type]+'</td><td class="r '+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>');
+h+='<h3>Stock at end of this day</h3>'+(c.stk.length?'<div class="sheet"><table style="min-width:360px"><tr><th>Item</th><th>In stock</th></tr>'+c.stk.map(function(it){return '<tr><td class="r" style="text-align:left">'+esc(it.name)+'</td><td class="r"><b>'+qtyAt(c,it,d)+' '+esc(it.unit)+'</b></td></tr>'}).join('')+'</table></div>':'<p class="note">No items.</p>');
+var ss=c.sal.filter(function(s){return s.d===d}),st=0;
+h+='<h3>Sales</h3>'+(ss.length?ss.map(function(s){var t=saleTotal(s);st+=t;return '<div class="item" data-a="openinv" data-id="'+s.id+'"><div><b>'+esc(s.no)+' · '+esc(s.cust||'Walk-in')+'</b></div><b>'+money(t)+'</b></div>'}).join('')+'<div class="tot"><span>Total sales</span><span>'+money(st)+'</span></div>':'<p class="note">None.</p>');
+var day=c.att[d]||{},n={P:0,A:0,L:0,H:0};
+h+='<h3>Attendance</h3>'+(c.wrk.length?'<div class="sheet"><table style="min-width:300px"><tr><th>Worker</th><th>Status</th></tr>'+c.wrk.map(function(w){var s=day[w.id];if(s)n[s]++;return '<tr><td class="r" style="text-align:left">'+esc(w.name)+'</td><td class="r">'+({P:'Present',A:'Absent',L:'Leave',H:'Half day'}[s]||'-')+'</td></tr>'}).join('')+'</table></div><p class="note">Present: '+n.P+' · Half day: '+n.H+' · Absent: '+n.A+' · Leave: '+n.L+'</p>':'<p class="note">No workers.</p>');
+return h}
 
-    document.getElementById('btn-signout').addEventListener('click', () => signOut(auth));
+/* ---------- render ---------- */
+var FOC='';
+function dlgHtml(){
+if(!S.dlg)return '';var c=D.companies.filter(function(x){return x.id===S.dlg})[0];if(!c)return '';
+return '<div class="ov"><div class="dlg"><p>Do you want to delete <b>'+esc(c.name)+'</b>? All its data will be removed.</p><button class="btn red" data-a="dlgdel">Yes, delete</button><button class="btn alt" data-a="dlgx">Cancel</button><button class="lk" data-a="dlgren">Rename instead</button></div></div>'}
+function render(){
+if(S.cid&&!C()){S.cid=null;if(['co','acct','team','audit'].indexOf(S.v)<0)S.v='co'}
+var c=S.cid?C():null;
+document.body.classList.add('co');document.body.classList.toggle('front',S.v==='co');$('tick').innerHTML=tickHtml();
+$('bk').hidden=S.v==='co';$('lg').style.display=S.v==='co'?'':'none';
+$('tt').textContent=S.v==='acct'?'Account':S.v==='team'?'Team':S.v==='audit'?'Activity':(S.v==='co'||!c)?'Factory Manager':c.name;
+$('app').innerHTML=({co:vCo,home:vHome,acc:vAcc,stk:vStk,wrk:vWrk,day:vDay,inv:vInv,wp:vWp,acct:vAcct,team:vTeam,audit:vAudit})[S.v]();
+$('dlg').innerHTML=dlgHtml();
+if(RO)applyRO();setStatus();if(CLOUDMODE&&CL.ready){if(S.v==='team')loadTeam();if(S.v==='audit')loadAudit()}
+anim();
+if(FOC){var fe=document.querySelector(FOC);FOC='';if(fe){fe.scrollIntoView({block:'center'});fe.focus()}}}
+function find(k,id){var l=k==='co'?D.companies:C()[k];return l.filter(function(x){return x.id===id})[0]}
+function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else S.v='home';render();window.scrollTo(0,0)}
+
+/* ---------- events ---------- */
+var lpT=0,lpFired=false,lpX=0,lpY=0;
+document.addEventListener('pointerdown',function(e){var el=e.target.closest('[data-lp]');lpFired=false;if(!el||RO)return;lpX=e.clientX;lpY=e.clientY;clearTimeout(lpT);
+lpT=setTimeout(function(){lpFired=true;if(el.dataset.lpa==='codel'){S.dlg=el.dataset.id;render()}else if(el.dataset.lpa==='mv'){S.mv=el.dataset.id;render()}},+el.dataset.lp)});
+['pointerup','pointercancel'].forEach(function(ev){document.addEventListener(ev,function(){clearTimeout(lpT)})});
+document.addEventListener('pointermove',function(e){if(lpT&&(Math.abs(e.clientX-lpX)>12||Math.abs(e.clientY-lpY)>12))clearTimeout(lpT)});
+document.addEventListener('contextmenu',function(e){if(e.target.closest('[data-lp]'))e.preventDefault()});
+
+document.addEventListener('input',function(e){var t=e.target;
+if(t.id==='q'){S.q=t.value;$('sl').innerHTML=stkList(C())}
+else if(t.id==='sq'){S.sq=t.value;$('sr').innerHTML=sellRes(C())}
+else if(t.id==='lq'){S.lq=t.value;$('lr').innerHTML=ledBody()}
+else if(t.id==='dq'){S.dq=t.value;$('dt').innerHTML=debtTable(C())}
+else if(t.id==='wsq'){S.wsq=t.value;$('wsr').innerHTML=wsRes(C())}
+else if(t.dataset&&t.dataset.c)cartSet(t)});
+
+document.addEventListener('change',function(e){
+var t=e.target;
+if(t.dataset&&t.dataset.f){var c=S.cid?C():null,it=find(t.dataset.k,t.dataset.id);if(!it)return;
+var f=t.dataset.f,v=t.value,k=t.dataset.k;
+if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid')v=v===''?'':parseFloat(v);
+if(f==='d'&&!v)v=today();
+if(k==='stk'&&f==='qty'){var nq=num(v),dl=nq-num(it.qty);if(dl)mvAdj(c,it,dl,'set','',S.sd);save();render();return}
+it[f]=v;save();render()}
+else if(t.id==='mo'&&t.value){S.month=t.value;S.ld='';render()}
+else if(t.id==='ldf'){S.ld=t.value||'';render()}
+else if(t.id==='ad'&&t.value){S.date=t.value;render()}
+else if(t.id==='rd'&&t.value){S.rd=t.value;render()}
+else if(t.id==='td'&&t.value){S.td=t.value;render()}
+else if(t.id==='sd'&&t.value){S.sd=t.value;render()}
+else if(t.id==='wm'&&t.value){S.wm=t.value;render()}});
+$('bk').addEventListener('click',back);
+$('rf').addEventListener('change',function(e){
+var f=e.target.files[0];if(!f)return;var r=new FileReader();
+r.onload=function(){try{var x=JSON.parse(r.result);if(!x.companies||!x.companies.length)throw 0;
+if(confirm('Replace all data on this phone with the backup?')){D=x;D.companies.forEach(fix);save();S.v='co';S.cid=null;render();toast('Backup restored')}}catch(err){toast('This is not a valid backup file')}};
+r.readAsText(f);e.target.value=''});
+
+document.addEventListener('click',function(e){
+if(lpFired){lpFired=false;return}
+var b=e.target.closest('[data-a]');if(!b)return;
+var a=b.dataset.a,id=b.dataset.id,c=S.cid?C():null;
+if(RO&&!ROA[a]){toast('View-only access');return}
+if(a==='open'){S.cid=id;S.v='home';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='addco'){var n=$('nc').value.trim();if(!n){toast('Enter a company name');return}D.companies.push(blank(n));save();render()}
+else if(a==='dlgx'){S.dlg='';render()}
+else if(a==='dlgdel'){if(D.companies.length<2){toast('Keep at least one company');S.dlg='';render();return}D.companies=D.companies.filter(function(x){return x.id!==S.dlg});S.dlg='';save();render()}
+else if(a==='dlgren'){var cc=D.companies.filter(function(x){return x.id===S.dlg})[0],nn=prompt('New company name',cc.name);S.dlg='';if(nn&&nn.trim()){cc.name=nn.trim();save()}render()}
+else if(a==='go'){S.v=b.dataset.v;S.arm='';render();window.scrollTo(0,0)}
+else if(a==='ldclr'){S.ld='';render()}
+else if(a==='atab'){S.atab=b.dataset.t;S.arm='';render()}
+else if(a==='tab'){S.tab=b.dataset.t;S.arm='';render()}
+else if(a==='wtab'){S.wtab=b.dataset.t;S.arm='';S.mv='';render()}
+else if(a==='wopen'){S.wid=id;S.wm=today().slice(0,7);S.v='wp';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='back'){back()}
+else if(a==='del'){var k=b.dataset.k,key=k+id;
+if(S.arm!==key){S.arm=key;render();return}
+S.arm='';c[k]=c[k].filter(function(x){return x.id!==id});save();render()}
+else if(a==='addrow'){S.lq='';var m=S.month,nr={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',inc:'',exp:''};c.led.push(nr);FOC='input[data-f=note][data-id="'+nr.id+'"]';save();render()}
+else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
+else if(a==='addstk'){var n2=$('sn').value.trim();if(!n2){toast('Enter the item name');return}
+var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd);save();render()}
+else if(a==='in'||a==='out'){var it2=find('stk',id),v=num($('adj-'+id).value);if(v<=0){toast('Enter an amount');return}
+if(a==='out'&&v>num(it2.qty)){toast('Only '+num(it2.qty)+' '+it2.unit+' in stock');return}
+mvAdj(c,it2,a==='in'?v:-v,a,'',S.sd);save();render()}
+else if(a==='delmv'){var key2='mv'+id;if(S.arm!==key2){S.arm=key2;render();return}
+S.arm='';var mm=c.mov.filter(function(x){return x.id===id})[0];if(!mm)return;var itx=item(c,mm.pid);
+if(itx){if(num(itx.qty)-mm.delta<-0.000001){toast('Cannot delete: part of this stock was already sold or used');render();return}itx.qty=num(itx.qty)-mm.delta}
+c.mov=c.mov.filter(function(x){return x.id!==id});save();render()}
+else if(a==='addline'){var it3=item(c,id);S.cart.lines.push({pid:id,qty:'',price:it3&&it3.price!=null?it3.price:''});$('cartbox').innerHTML=cartHtml(c);var fq=document.querySelector('[data-c=lq][data-i="'+(S.cart.lines.length-1)+'"]');if(fq){fq.scrollIntoView({block:'center'});fq.focus()}}
+else if(a==='rmline'){S.cart.lines.splice(+b.dataset.i,1);$('cartbox').innerHTML=cartHtml(c)}
+else if(a==='savesale'){
+var ls=S.cart.lines.filter(function(l){return num(l.qty)>0});
+if(!ls.length){toast('Add a product and quantity');return}
+for(var i=0;i<ls.length;i++){var p=item(c,ls[i].pid);if(!p){toast('A product is missing');return}
+var tot=0;ls.forEach(function(l){if(l.pid===p.id)tot+=num(l.qty)});
+if(tot>num(p.qty)){toast('Only '+num(p.qty)+' '+p.unit+' of '+p.name+' in stock');return}}
+var s={id:uid(),no:'INV-'+pad(c.invNo),d:S.cart.d||today(),cust:S.cart.cust.trim(),phone:S.cart.phone.trim(),paid:num(S.cart.paid),lines:ls.map(function(l){var p2=item(c,l.pid);p2.price=num(l.price);return{pid:l.pid,name:p2.name,unit:p2.unit,qty:num(l.qty),price:num(l.price)}})};
+s.lines.forEach(function(l){mvAdj(c,item(c,l.pid),-l.qty,'sale',s.no,s.d)});
+c.invNo++;c.sal.unshift(s);S.cart=newCart();S.inv=s.id;S.v='inv';S.arm='';save();render();window.scrollTo(0,0)}
+else if(a==='openinv'){S.inv=id;S.v='inv';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='delinv'){
+if(S.arm!=='inv'){S.arm='inv';render();return}
+var sl=c.sal.filter(function(x){return x.id===S.inv})[0];
+if(sl){sl.lines.forEach(function(l){var p3=item(c,l.pid);if(p3)p3.qty=num(p3.qty)+l.qty});c.mov=c.mov.filter(function(m){return !(m.type==='sale'&&m.note===sl.no)});c.sal=c.sal.filter(function(x){return x.id!==sl.id})}
+S.arm='';save();toast('Invoice deleted, stock returned');back()}
+else if(a==='pr'){window.print()}
+else if(a==='wa'){
+var sv=c.sal.filter(function(x){return x.id===S.inv})[0],tt=saleTotal(sv),msg='*'+c.name+'*\nInvoice '+sv.no+' | '+dmy(sv.d)+'\nCustomer: '+(sv.cust||'Walk-in')+'\n';
+sv.lines.forEach(function(l){msg+='- '+l.name+': '+l.qty+' '+l.unit+' x '+l.price+' = '+money(l.qty*l.price)+'\n'});
+msg+='Total: '+money(tt)+'\nReceived: '+money(sv.paid)+'\nDue: '+money(tt-sv.paid);
+var dg=String(sv.phone).replace(/\D/g,'');if(dg.charAt(0)==='0')dg='880'+dg.slice(1);
+window.open('https://wa.me/'+dg+'?text='+encodeURIComponent(msg),'_blank')}
+else if(a==='addw'){var nw={id:uid(),name:'',phone:'',role:'',wage:'',joined:today(),note:''};c.wrk.unshift(nw);FOC='input[data-f=name][data-id="'+nw.id+'"]';save();render()}
+else if(a==='att'){var dy=c.att[S.date]||(c.att[S.date]={}),w=b.dataset.w,s2=b.dataset.s;if(dy[w]===s2)delete dy[w];else dy[w]=s2;save();render()}
+else if(a==='allp'){var d2=c.att[S.date]||(c.att[S.date]={});c.wrk.forEach(function(x){d2[x.id]='P'});save();render()}
+else if(a==='mvup'||a==='mvdn'){var ix=c.wrk.map(function(x){return x.id}).indexOf(id),j=a==='mvup'?ix-1:ix+1;
+if(j>=0&&j<c.wrk.length){var tmp=c.wrk[ix];c.wrk[ix]=c.wrk[j];c.wrk[j]=tmp;save();render()}}
+else if(a==='mvend'){S.mv='';render()}
+else if(a==='addadv'){
+var wid=$('aw').value,am=num($('aam').value);if(!wid){toast('Add a worker first');return}if(am<=0){toast('Enter the advance amount');return}
+var wk=c.wrk.filter(function(x){return x.id===wid})[0],due=earned(c,wk).earn-advOf(c,wid);
+if(am>Math.floor(due*100)/100){toast('Advance cannot be more than due: '+money(Math.max(0,due)));return}
+c.adv.push({id:uid(),wid:wid,d:$('adt').value||today(),amt:am,note:$('ano').value.trim()});save();render()}
+else if(a==='signout'){if(CLOUDMODE&&FA&&CL.auth)FA.signOut(CL.auth)}
+else if(a==='newinv'){var code=genCode(),role=$('ir').value;
+FS.setDoc(FS.doc(CL.db,'invites',code),{wid:CL.wid,role:role,used:false,createdBy:CL.user.uid,createdAt:FS.serverTimestamp()}).then(function(){S.invite={code:code,role:role};render()},function(er){toast(errMsg(er))})}
+else if(a==='rmmember'){var mk='mb'+id;if(S.arm!==mk){S.arm=mk;render();return}S.arm='';
+FS.deleteDoc(FS.doc(CL.db,'workspaces',CL.wid,'members',id)).then(function(){toast('Member removed');render()},function(er){toast(errMsg(er))})}
+else if(a==='upl'){if(!LOCALSAVED||!confirm('Upload the data saved on this device to the cloud?'))return;
+D=LOCALSAVED;D.companies.forEach(function(x,i){fix(x);if(!x.ts)x.ts=Date.now()+i});LOCALSAVED=null;S.v='co';save();render();toast('Uploading…')}
+else if(a==='setpin'){var p1=$('pn1').value,p2=$('pn2').value;
+if(!/^\d{4,6}$/.test(p1)){toast('PIN must be 4 to 6 digits');return}
+if(p1!==p2){toast('The two PINs are different');return}
+var salt=Math.random().toString(36).slice(2)+Date.now().toString(36);
+hashPin(p1,salt).then(function(hh){PIN={salt:salt,hash:hh,len:p1.length};try{localStorage.setItem('fm_pin',JSON.stringify(PIN))}catch(er){}toast('PIN lock is on');render()})}
+else if(a==='offpin'){var p0=$('pn0').value;hashPin(p0,PIN.salt).then(function(hh){if(hh===PIN.hash){PIN=null;try{localStorage.removeItem('fm_pin')}catch(er){}toast('PIN lock is off');render()}else toast('Wrong PIN')})}
+else if(a==='bak'){try{var bl=new Blob([JSON.stringify(D)],{type:'application/json'}),u=URL.createObjectURL(bl),l=document.createElement('a');l.href=u;l.download='factory-backup-'+today()+'.json';document.body.appendChild(l);l.click();l.remove();setTimeout(function(){URL.revokeObjectURL(u)},1000);toast('Backup saved');markBackup();render()}catch(err){toast('Could not make backup')}}
+else if(a==='rst'){if(CLOUDMODE&&CL.role!=='owner'){toast('Only the owner can restore a backup');return}$('rf').click()}});
+/* ================= PIN LOCK, CLOUD SYNC, ACCOUNT ================= */
+var CL={ready:false,user:null,wid:'',role:'',wname:'',email:'',db:null,auth:null,unsubs:[],cos:{},pend:{},coDone:false,synced:{},ord:{},lastBackup:0,signing:false};
+var FS=null,FA=null,RO=false,flBusy=false,flAgain=false,flT=0,GV={e:''};
+var COLLS=['led','debt','stk','sal','mov','wrk','adv'];
+var LBL={led:'income/expense row',debt:'factory debt row',stk:'stock item',sal:'invoice',mov:'stock entry',wrk:'worker',adv:'advance',att:'attendance day',co:'company'};
+var ROA={open:1,go:1,atab:1,tab:1,wtab:1,back:1,wopen:1,ldclr:1,pr:1,openinv:1,wa:1,bak:1,signout:1,setpin:1,offpin:1};
+var ROOK={q:1,sq:1,dq:1,lq:1,wsq:1,mo:1,ldf:1,ad:1,rd:1,td:1,sd:1,wm:1,pn0:1,pn1:1,pn2:1,ir:1};
+var LOGO=($('lg')?$('lg').outerHTML:'').replace('width="34" height="34"','width="64" height="64"').replace('id="lg"','');
+
+/* ----- PIN lock (device screen lock) ----- */
+var PIN=null;try{PIN=JSON.parse(localStorage.getItem('fm_pin')||'null')}catch(e){}
+var pb='',tries=0,lockUntil=0,hiddenAt=0,isLocked=false;
+function weakHash(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<s.length;i++){var ch=s.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 'w'+(4294967296*(2097151&h2)+(h1>>>0)).toString(16)}
+function hashPin(pin,salt){return new Promise(function(res){var s=salt+':'+pin;
+if(window.crypto&&crypto.subtle&&window.TextEncoder){crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)).then(function(b){res(Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join(''))}).catch(function(){res(weakHash(s))})}else res(weakHash(s))})}
+function lkMsg(m){var e=$('lkm');if(e)e.textContent=m}
+function dots(){var e=$('dots');if(!e||!PIN)return;var s='';for(var i=0;i<PIN.len;i++)s+=i<pb.length?'●':'○';e.textContent=s}
+function lockShow(){
+var el=$('lock');
+if(!PIN){el.style.display='none';el.innerHTML='';isLocked=false;return}
+isLocked=true;pb='';var keys='';
+[1,2,3,4,5,6,7,8,9].forEach(function(n){keys+='<button data-k="'+n+'">'+n+'</button>'});
+keys+='<button data-k="x" aria-label="Clear">C</button><button data-k="0">0</button><button data-k="b" aria-label="Delete">⌫</button>';
+el.innerHTML='<div class="lkc"><div class="lkl">'+LOGO+'</div><h2>Enter PIN</h2><div id="dots" class="dots"></div><div id="lkm" class="lkm"></div><div class="kp3">'+keys+'</div><button class="lkf" data-k="f">Forgot PIN?</button></div>';
+el.style.display='flex';dots()}
+function pinPress(k){
+if(!PIN||!isLocked)return;
+if(k==='f'){forgotPin();return}
+if(Date.now()<lockUntil){lkMsg('Too many tries. Wait '+Math.ceil((lockUntil-Date.now())/1000)+' seconds.');return}
+if(k==='b')pb=pb.slice(0,-1);else if(k==='x')pb='';else if(pb.length<PIN.len)pb+=k;
+dots();
+if(pb.length===PIN.len){var typed=pb;hashPin(typed,PIN.salt).then(function(h){
+if(h===PIN.hash){isLocked=false;tries=0;$('lock').style.display='none';$('lock').innerHTML=''}
+else{tries++;pb='';dots();if(tries>=5){tries=0;lockUntil=Date.now()+30000;lkMsg('Too many tries. Wait 30 seconds.')}else lkMsg('Wrong PIN')}})}}
+function forgotPin(){
+if(CLOUDMODE){if(confirm('Sign out and remove the PIN on this device? You will log in again with your email and password.')){try{localStorage.removeItem('fm_pin')}catch(e){}PIN=null;(FA&&CL.auth?FA.signOut(CL.auth):Promise.resolve()).then(function(){location.reload()},function(){location.reload()})}}
+else lkMsg('Without cloud sign-in, a forgotten PIN can only be removed by clearing the app data. Restore your backup file afterwards.')}
+$('lock').addEventListener('click',function(e){var b=e.target.closest('[data-k]');if(b)pinPress(b.dataset.k)});
+document.addEventListener('keydown',function(e){if(!isLocked)return;if(/^\d$/.test(e.key))pinPress(e.key);else if(e.key==='Backspace')pinPress('b')});
+document.addEventListener('visibilitychange',function(){
+if(document.hidden){hiddenAt=Date.now();cloudFlush()}
+else if(PIN&&hiddenAt&&Date.now()-hiddenAt>60000&&!isLocked){lockShow()}});
+window.addEventListener('pagehide',function(){cloudFlush()});
+function pinHtml(){
+if(PIN)return '<h3>PIN lock</h3><div class="card"><b>PIN lock is ON on this device</b><p class="note">The app asks for the PIN when you open it and after it has been in the background for a minute.</p><label class="note">Current PIN (to turn off)</label><input id="pn0" type="password" inputmode="numeric" maxlength="6"><button class="btn alt full" data-a="offpin">Turn PIN lock off</button></div>';
+return '<h3>PIN lock</h3><div class="card"><b>Lock this device with a PIN</b><p class="note">4 to 6 digits. This protects the app on this phone or computer.</p><input id="pn1" type="password" inputmode="numeric" maxlength="6" placeholder="New PIN"><input id="pn2" type="password" inputmode="numeric" maxlength="6" placeholder="Repeat PIN" style="margin-top:8px"><button class="btn full" data-a="setpin">Turn PIN lock on</button></div>'}
+
+/* ----- backup info ----- */
+function lastBakMs(){if(CLOUDMODE)return CL.lastBackup||0;try{return parseInt(localStorage.getItem('fm_lastbak')||'0',10)||0}catch(e){return 0}}
+function bakInfo(){var t=lastBakMs();if(!t)return{txt:'Last backup: never',bad:true};var d=Math.floor((Date.now()-t)/864e5);return{txt:'Last backup: '+(d<1?'today':d+' day'+(d>1?'s':'')+' ago'),bad:d>7}}
+function markBackup(){
+var now=Date.now();
+if(CLOUDMODE){CL.lastBackup=now;if(FS&&CL.ready&&CL.role!=='viewer')FS.setDoc(FS.doc(CL.db,'workspaces',CL.wid),{lastBackup:FS.serverTimestamp()},{merge:true}).catch(function(){})}
+else{try{localStorage.setItem('fm_lastbak',String(now))}catch(e){}}}
+
+/* ----- stable JSON + diff sync ----- */
+function sj(o){if(o===null||typeof o!=='object')return JSON.stringify(o===undefined?null:o);if(Array.isArray(o))return '['+o.map(sj).join(',')+']';return '{'+Object.keys(o).sort().filter(function(k){return o[k]!==undefined}).map(function(k){return JSON.stringify(k)+':'+sj(o[k])}).join(',')+'}'}
+function curMap(){
+var m={};
+D.companies.forEach(function(c,ci){
+if(!c.ts)c.ts=Date.now()+ci;
+m[c.id+'|co|'+c.id]={cid:c.id,coll:'co',id:c.id,data:{name:c.name,invNo:c.invNo||1,ts:c.ts}};
+COLLS.forEach(function(k){(c[k]||[]).forEach(function(it,ix){var d=JSON.parse(JSON.stringify(it));delete d.id;if(k==='wrk')d.o=ix;m[c.id+'|'+k+'|'+it.id]={cid:c.id,coll:k,id:it.id,data:d}})});
+Object.keys(c.att||{}).forEach(function(dt){var mm=c.att[dt];if(mm&&Object.keys(mm).length)m[c.id+'|att|'+dt]={cid:c.id,coll:'att',id:dt,data:{m:mm}}})});
+return m}
+function refFor(e){return e.coll==='co'?FS.doc(CL.db,'workspaces',CL.wid,'companies',e.cid):FS.doc(CL.db,'workspaces',CL.wid,'companies',e.cid,e.coll,e.id)}
+function cname(cid){var c=D.companies.filter(function(x){return x.id===cid})[0];if(c)return c.name;try{return JSON.parse(CL.synced[cid+'|co|'+cid]).name}catch(e){return 'company'}}
+function descr(coll,d){
+try{
+if(coll==='led')return (d.note||'row')+(d.inc?' +'+d.inc:'')+(d.exp?' −'+d.exp:'');
+if(coll==='debt')return (d.sup||'')+' '+(d.item||'')+(d.price?' '+d.price:'');
+if(coll==='stk')return d.name||'';
+if(coll==='sal')return (d.no||'')+' '+(d.cust||'');
+if(coll==='mov')return (d.type||'')+' '+(d.name||'')+' '+(d.delta||'');
+if(coll==='wrk')return d.name||'';
+if(coll==='adv')return 'advance '+(d.amt||'');
+if(coll==='att')return d.m?Object.keys(d.m).length+' marks':'';
+if(coll==='co')return d.name||''}catch(e){}return ''}
+function auditOf(cur,sets,dels){
+var lines=[];
+sets.forEach(function(k){var e=cur[k],old=CL.synced[k];
+if(old===undefined){lines.push('Added '+LBL[e.coll]+': '+descr(e.coll,e.data)+' ['+cname(e.cid)+']');return}
+if(e.coll==='wrk'){try{var o=JSON.parse(old);delete o.o;var n=JSON.parse(JSON.stringify(e.data));delete n.o;if(sj(o)===sj(n)){if(lines.indexOf('Changed worker order')<0)lines.push('Changed worker order');return}}catch(x){}}
+lines.push('Edited '+LBL[e.coll]+': '+descr(e.coll,e.data)+' ['+cname(e.cid)+']')});
+dels.forEach(function(k){var p=k.split('|'),old={};try{old=JSON.parse(CL.synced[k])}catch(x){}lines.push('Deleted '+LBL[p[1]]+': '+descr(p[1],old)+' ['+cname(p[0])+']')});
+return lines}
+function cloudDirty(){if(!CL.ready)return;clearTimeout(flT);flT=setTimeout(cloudFlush,350)}
+function cloudFlush(){
+clearTimeout(flT);
+if(!CLOUDMODE||!CL.ready||CL.role==='viewer')return;
+if(flBusy){flAgain=true;return}
+var cur=curMap(),sets=[],dels=[];
+Object.keys(cur).forEach(function(k){if(CL.synced[k]!==sj(cur[k].data))sets.push(k)});
+Object.keys(CL.synced).forEach(function(k){if(!cur[k])dels.push(k)});
+if(!sets.length&&!dels.length)return;
+var lines=auditOf(cur,sets,dels),prev={};
+var ops=[];
+sets.forEach(function(k){prev[k]=CL.synced[k];CL.synced[k]=sj(cur[k].data);ops.push({t:'s',e:cur[k]})});
+dels.forEach(function(k){prev[k]=CL.synced[k];delete CL.synced[k];var p=k.split('|');ops.push({t:'d',e:{cid:p[0],coll:p[1],id:p.slice(2).join('|')}})});
+var audit={uid:CL.user.uid,email:CL.email,at:FS.serverTimestamp(),text:lines.slice(0,3).join('; ')+(lines.length>3?' … (+'+(lines.length-3)+' more)':''),lines:lines.slice(0,25),n:lines.length};
+var chunks=[];for(var i=0;i<ops.length;i+=14)chunks.push(ops.slice(i,i+14));
+flBusy=true;setStatus();
+var p=Promise.resolve();
+chunks.forEach(function(ch,ci){p=p.then(function(){
+var b=FS.writeBatch(CL.db);
+ch.forEach(function(op){var ref=refFor(op.e);if(op.t==='s')b.set(ref,op.e.data);else b.delete(ref)});
+if(ci===0)b.set(FS.doc(FS.collection(CL.db,'workspaces',CL.wid,'audit')),audit);
+return b.commit()})});
+p.then(function(){flBusy=false;setStatus();if(flAgain){flAgain=false;cloudFlush()}},function(err){
+flBusy=false;flAgain=false;
+Object.keys(prev).forEach(function(k){if(prev[k]===undefined)delete CL.synced[k];else CL.synced[k]=prev[k]});
+setStatus();
+toast(err&&err.code==='permission-denied'?'You do not have permission to change this data.':'Could not save to the cloud. It will retry on the next change.')})}
+
+function setStatus(){var s=$('st');if(!s)return;if(!CLOUDMODE||!CL.ready){s.textContent='';return}var on=navigator.onLine!==false;s.textContent=flBusy?'Saving…':(on?'● Synced':'○ Offline');s.className='st '+(on?'on':'off')}
+window.addEventListener('online',function(){setStatus();cloudFlush()});window.addEventListener('offline',setStatus);
+
+/* ----- live listeners ----- */
+var rsT=0,rsPend=false;
+function typing(){var a=document.activeElement;return !!(a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName))}
+function renderSoon(){if(!CL.ready)return;if(typing()){rsPend=true;return}clearTimeout(rsT);rsT=setTimeout(function(){if(!typing())render();else rsPend=true},60)}
+document.addEventListener('focusout',function(){if(rsPend){rsPend=false;setTimeout(function(){if(!typing())render()},250)}});
+function checkReady(){if(!CL.ready&&CL.coDone&&!Object.keys(CL.pend).length){CL.ready=true;gate('');setStatus();render()}}
+function listenErr(err){if(err&&err.code==='permission-denied'){CL.ready=false;gate(msgCard('You no longer have access to this workspace.','<button class="btn full" data-g="signout">Sign out</button>'))}else if(err&&err.code!=='unavailable')toast('Sync problem: '+(err.code||err.message||''))}
+function sortArr(c,k){
+if(k==='att'||k==='co')return;
+var a=c[k];if(!a||!Array.isArray(a))return;
+if(k==='wrk')a.sort(function(x,y){return ((CL.ord[x.id]||0)-(CL.ord[y.id]||0))||(x.id<y.id?-1:1)});
+else if(k==='stk'||k==='sal')a.sort(function(x,y){return x.id<y.id?1:x.id>y.id?-1:0});
+else a.sort(function(x,y){return x.id<y.id?-1:x.id>y.id?1:0})}
+function applyColl(cid,k,snap){
+var c=D.companies.filter(function(x){return x.id===cid})[0];if(!c)return;
+var touched=false;
+snap.docChanges().forEach(function(ch){
+var id=ch.doc.id,key=cid+'|'+k+'|'+id,pend=ch.doc.metadata&&ch.doc.metadata.hasPendingWrites;
+if(ch.type==='removed'){
+if(pend)return;
+if(k==='att')delete c.att[id];else c[k]=c[k].filter(function(x){return x.id!==id});
+delete CL.synced[key];touched=true;return}
+if(pend)return;
+var d=ch.doc.data();CL.synced[key]=sj(d);touched=true;
+if(k==='att'){c.att[id]=d.m||{};return}
+var it=JSON.parse(JSON.stringify(d));it.id=id;
+if(k==='wrk'){CL.ord[id]=it.o||0;delete it.o}
+var ix=-1;c[k].forEach(function(x,i){if(x.id===id)ix=i});
+if(ix>=0)c[k][ix]=it;else c[k].push(it)});
+if(touched){sortArr(c,k);renderSoon()}}
+function attachCo(id){
+if(CL.cos[id])return;
+var us=[];CL.cos[id]=us;
+COLLS.concat(['att']).forEach(function(k){
+CL.pend[id+'|'+k]=1;
+us.push(FS.onSnapshot(FS.collection(CL.db,'workspaces',CL.wid,'companies',id,k),function(snap){applyColl(id,k,snap);delete CL.pend[id+'|'+k];checkReady()},function(err){delete CL.pend[id+'|'+k];checkReady();listenErr(err)}))})}
+function detachCo(id){
+(CL.cos[id]||[]).forEach(function(u){try{u()}catch(e){}});delete CL.cos[id];
+Object.keys(CL.synced).forEach(function(k){if(k.indexOf(id+'|')===0)delete CL.synced[k]})}
+function listenAll(){
+CL.unsubs.forEach(function(u){try{u()}catch(e){}});CL.unsubs=[];
+Object.keys(CL.cos).forEach(detachCo);
+D.companies=[];CL.ready=false;CL.coDone=false;CL.pend={};CL.synced={};
+CL.unsubs.push(FS.onSnapshot(FS.collection(CL.db,'workspaces',CL.wid,'companies'),function(snap){
+snap.docChanges().forEach(function(ch){
+var id=ch.doc.id,d=ch.doc.data(),pend=ch.doc.metadata&&ch.doc.metadata.hasPendingWrites;
+if(ch.type==='removed'){
+if(!pend)D.companies=D.companies.filter(function(x){return x.id!==id});
+detachCo(id);return}
+var c=D.companies.filter(function(x){return x.id===id})[0];
+if(!c){c=fix({id:id,name:d.name,ts:d.ts});c.invNo=d.invNo||1;D.companies.push(c)}
+else if(!pend){c.name=d.name;c.invNo=d.invNo||1;c.ts=d.ts}
+if(!pend)CL.synced[id+'|co|'+id]=sj({name:d.name,invNo:d.invNo||1,ts:d.ts});
+attachCo(id)});
+D.companies.sort(function(a,b){return (a.ts||0)-(b.ts||0)});
+CL.coDone=true;checkReady();renderSoon()},listenErr))}
+function teardown(){CL.unsubs.forEach(function(u){try{u()}catch(e){}});CL.unsubs=[];Object.keys(CL.cos).forEach(detachCo);CL.ready=false;CL.coDone=false;CL.pend={};CL.synced={};D={companies:[]};RO=false;CL.wid='';CL.role=''}
+
+/* ----- sign in / sign up / workspace ----- */
+function gate(html){var g=$('gate');g.innerHTML=html||'';g.style.display=html?'flex':'none'}
+function msgCard(t,extra){return '<div class="gc"><div class="lkl">'+LOGO+'</div><p>'+esc(t)+'</p>'+(extra||'')+'</div>'}
+function errMsg(e){
+var c=(e&&e.code)||'',m={'auth/invalid-credential':'Wrong email or password.','auth/wrong-password':'Wrong email or password.','auth/user-not-found':'No account with this email.','auth/email-already-in-use':'This email already has an account. Sign in instead.','auth/weak-password':'Use at least 6 characters.','auth/invalid-email':'This email address is not valid.','auth/network-request-failed':'No internet connection.','auth/too-many-requests':'Too many tries. Wait a few minutes and try again.','permission-denied':'No permission for this action.','bad-invite':'This invite code is not valid or was already used.'};
+return m[c]||('Something went wrong ('+(c||(e&&e.message)||'unknown')+').')}
+function radios(){return '<div class="gm"><label><input type="radio" name="gk" value="new" checked> I am the owner: create my workspace</label><input id="gw" placeholder="Business name (workspace)"><label><input type="radio" name="gk" value="join"> I have an invite code</label><input id="gc" placeholder="Invite code"></div>'}
+function authHtml(mode,msg){
+var up=mode==='up';
+return '<div class="gc"><div class="lkl">'+LOGO+'</div><h2>'+(up?'Create account':'Sign in')+'</h2>'+(msg?'<p class="gerr">'+esc(msg)+'</p>':'')
++'<input id="ge" type="email" placeholder="Email" autocomplete="username" value="'+esc(GV.e)+'"><input id="gp" type="password" placeholder="'+(up?'Password or PIN (at least 6 characters)':'Password or PIN')+'" autocomplete="'+(up?'new-password':'current-password')+'" style="margin-top:8px">'
++(up?radios():'')
++'<button class="btn full" data-g="'+(up?'signup':'signin')+'">'+(up?'Create account':'Sign in')+'</button>'
++(up?'':'<button class="lk" data-g="reset">Forgot password?</button>')
++'<button class="lk" data-g="'+(up?'tabin':'tabup')+'">'+(up?'I already have an account':'Create account or join with a code')+'</button></div>'}
+function setupHtml(msg){return '<div class="gc"><div class="lkl">'+LOGO+'</div><h2>Finish setup</h2>'+(msg?'<p class="gerr">'+esc(msg)+'</p>':'')+'<p class="note">Your account has no workspace yet.</p>'+radios()+'<button class="btn full" data-g="setupgo">Continue</button><button class="lk" data-g="signout">Sign out</button></div>'}
+function keepEmail(){var e=$('ge');if(e)GV.e=e.value.trim()}
+function genCode(){var al='ABCDEFGHJKMNPQRSTUVWXYZ23456789',s='',a=new Uint32Array(10);if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(var i=0;i<10;i++)a[i]=Math.floor(Math.random()*4294967296);for(var j=0;j<10;j++)s+=al.charAt(a[j]%al.length);return s}
+function mkWorkspace(u,name){
+var wref=FS.doc(FS.collection(CL.db,'workspaces')),wid=wref.id;
+return FS.setDoc(wref,{name:name,ownerUid:u.uid,createdAt:FS.serverTimestamp()})
+.then(function(){return FS.setDoc(FS.doc(CL.db,'workspaces',wid,'members',u.uid),{role:'owner',email:u.email||'',joinedAt:FS.serverTimestamp()})})
+.then(function(){return FS.setDoc(FS.doc(CL.db,'users',u.uid),{wid:wid,role:'owner',email:u.email||''})})}
+function joinWorkspace(u,code){
+code=String(code||'').trim().toUpperCase();
+return FS.getDoc(FS.doc(CL.db,'invites',code)).then(function(s){
+if(!s.exists()||s.data().used)throw {code:'bad-invite'};
+var iv=s.data(),b=FS.writeBatch(CL.db);
+b.set(FS.doc(CL.db,'workspaces',iv.wid,'members',u.uid),{role:iv.role,email:u.email||'',code:code,joinedAt:FS.serverTimestamp()});
+b.update(FS.doc(CL.db,'invites',code),{used:true,usedBy:u.uid});
+b.set(FS.doc(CL.db,'users',u.uid),{wid:iv.wid,role:iv.role,email:u.email||''});
+return b.commit()})}
+function setupStep(kind,val){var u=CL.auth.currentUser;return kind==='new'?mkWorkspace(u,val):joinWorkspace(u,val)}
+function pickSetup(){var k=document.querySelector('input[name=gk]:checked'),kind=k?k.value:'new',val=kind==='new'?($('gw').value||'').trim():($('gc').value||'').trim();return{kind:kind,val:val}}
+function doSignin(){
+var em=($('ge').value||'').trim(),pw=$('gp').value;GV.e=em;
+if(!em||!pw){gate(authHtml('in','Enter your email and password.'));return}
+gate(msgCard('Signing in…'));
+FA.signInWithEmailAndPassword(CL.auth,em,pw).catch(function(e){gate(authHtml('in',errMsg(e)))})}
+function doSignup(){
+var em=($('ge').value||'').trim(),pw=$('gp').value,s=pickSetup();GV.e=em;
+if(!em||!pw){gate(authHtml('up','Enter your email and a password.'));return}
+if(!s.val){gate(authHtml('up',s.kind==='new'?'Enter your business name.':'Enter the invite code.'));return}
+CL.signing=true;gate(msgCard('Creating your account…'));
+FA.createUserWithEmailAndPassword(CL.auth,em,pw).then(function(cred){
+return setupStep(s.kind,s.val).then(function(){CL.signing=false;resolveUser(cred.user)},function(e){CL.signing=false;gate(setupHtml(errMsg(e)))})},
+function(e){CL.signing=false;gate(authHtml('up',errMsg(e)))})}
+function doSetup(){var s=pickSetup();if(!s.val){gate(setupHtml(s.kind==='new'?'Enter your business name.':'Enter the invite code.'));return}
+gate(msgCard('Setting up…'));
+setupStep(s.kind,s.val).then(function(){resolveUser(CL.auth.currentUser)},function(e){gate(setupHtml(errMsg(e)))})}
+function doReset(){
+var em=($('ge').value||'').trim();GV.e=em;
+if(!em){gate(authHtml('in','Type your email first, then tap Forgot password.'));return}
+FA.sendPasswordResetEmail(CL.auth,em).then(function(){gate(authHtml('in','If this email has an account, a reset link was sent.'))},function(e){gate(authHtml('in',errMsg(e)))})}
+$('gate').addEventListener('click',function(e){
+var b=e.target.closest('[data-g]');if(!b)return;var g=b.dataset.g;
+if(g==='tabup'){keepEmail();gate(authHtml('up'))}
+else if(g==='tabin'){keepEmail();gate(authHtml('in'))}
+else if(g==='signin')doSignin();else if(g==='signup')doSignup();else if(g==='reset')doReset();else if(g==='setupgo')doSetup();
+else if(g==='signout'){FA.signOut(CL.auth)}
+else if(g==='reload')location.reload()});
+function resolveUser(u){
+CL.user=u;
+gate(msgCard('Loading your account…'));
+FS.getDoc(FS.doc(CL.db,'users',u.uid)).then(function(s){
+if(!s.exists()||!s.data().wid){gate(setupHtml());return}
+openWorkspace(s.data().wid,u)},function(e){gate(msgCard(errMsg(e),'<button class="btn full" data-g="signout">Sign out</button>'))})}
+function onUser(u){
+if(CL.signing)return;
+CL.user=u;
+if(!u){teardown();gate(authHtml('in'));render();return}
+resolveUser(u)}
+function openWorkspace(wid,u){
+Promise.all([FS.getDoc(FS.doc(CL.db,'workspaces',wid,'members',u.uid)),FS.getDoc(FS.doc(CL.db,'workspaces',wid))]).then(function(r){
+var m=r[0],w=r[1];
+if(!m.exists()){gate(msgCard('You no longer have access to this workspace. Ask the owner to invite you again.','<button class="btn full" data-g="signout">Sign out</button>'));return}
+var lb=w.exists()?w.data().lastBackup:0;
+CL.wid=wid;CL.role=m.data().role;CL.email=u.email||'';CL.wname=w.exists()?(w.data().name||''):'';
+CL.lastBackup=typeof lb==='number'?lb:(lb&&lb.toMillis?lb.toMillis():0);
+RO=CL.role==='viewer';
+listenAll()},function(e){
+gate(msgCard(e&&e.code==='permission-denied'?'You no longer have access to this workspace. Ask the owner to invite you again.':errMsg(e),'<button class="btn full" data-g="signout">Sign out</button>'))})}
+function startCloud(){
+gate(msgCard('Connecting…'));
+var B='https://www.gstatic.com/firebasejs/10.14.1/';
+Promise.all([import(B+'firebase-app.js'),import(B+'firebase-auth.js'),import(B+'firebase-firestore.js')]).then(function(m){
+FA=m[1];FS=m[2];
+var app=m[0].initializeApp(CFG);
+CL.auth=FA.getAuth(app);
+try{CL.db=FS.initializeFirestore(app,{localCache:FS.persistentLocalCache({tabManager:FS.persistentMultipleTabManager()})})}catch(e){CL.db=FS.getFirestore(app)}
+FA.onAuthStateChanged(CL.auth,onUser)}).catch(function(e){
+console.error("Firebase init error:", e);
+gate(msgCard('Cannot connect. Check your internet and try again.','<button class="btn full" data-g="reload">Try again</button>'))})}
+
+/* ----- account, team, activity views ----- */
+function vAcct(){
+var h='<h2>Account &amp; security</h2>';
+if(CLOUDMODE)h+='<div class="card"><label class="note">Signed in as</label><b>'+esc(CL.email)+'</b><br><small class="note">'+esc(CL.role)+' · '+esc(CL.wname)+'</small><button class="btn alt full" data-a="signout">Sign out</button></div>';
+else h+='<div class="card"><b>Cloud sync is not set up</b><p class="note">Data is kept on this device only. To use the same data on phone and computer, set up Firebase (see SETUP-FIREBASE.txt) and paste your settings into firebase-config.js.</p></div>';
+h+=pinHtml();
+var bi=bakInfo();
+h+='<h3>Backup</h3><div class="card"><p class="'+(bi.bad?'neg':'note')+'" style="margin:0 0 8px">'+bi.txt+'</p><div class="g2"><button class="btn alt" data-a="bak">Save backup file</button>'+((!CLOUDMODE||CL.role==='owner')?'<button class="btn alt" data-a="rst">Restore backup</button>':'')+'</div><p class="note">Save the file to Google Drive or another safe place.</p></div>';
+if(CLOUDMODE&&CL.role==='owner'){
+h+='<h3>Team</h3><button class="big" data-a="go" data-v="team">Team &amp; invites<small>Add managers and viewers with an invite code</small></button><button class="big" data-a="go" data-v="audit">Activity log<small>Who changed what and when</small></button>';
+if(LOCALSAVED&&!D.companies.length)h+='<div class="card"><b>Data found on this device</b><p class="note">Upload the companies saved on this device to the cloud. Do this only once.</p><button class="btn full" data-a="upl">Upload this device’s data</button></div>'}
+return h}
+function vTeam(){
+var inv=S.invite?'<div class="card"><b>Invite code (works once)</b><div class="q" style="letter-spacing:.12em">'+esc(S.invite.code)+'</div><p class="note">Role: '+esc(S.invite.role)+'. Send it to the person. They open the app, choose “Create account or join with a code”, and enter it.</p><a class="btn full" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text='+encodeURIComponent('Join '+CL.wname+' on Factory Manager. Open '+location.origin+' , choose "Create account or join with a code", then "I have an invite code" and use this code: '+S.invite.code+' (works once).')+'">Share on WhatsApp</a></div>':'';
+return '<h2>Team &amp; invites</h2><div class="card"><label class="note">Role for the new person</label><select id="ir"><option value="manager">Manager: can enter and edit data</option><option value="viewer">Viewer: can only look</option></select><button class="btn full" data-a="newinv">Create invite code</button></div>'+inv+'<h3>Members</h3><div id="tm"><p class="note">Loading…</p></div><p class="note">Owner: full control, team and activity log. Manager: enter and edit data. Viewer: read only.</p>'}
+function loadTeam(){
+FS.getDocs(FS.collection(CL.db,'workspaces',CL.wid,'members')).then(function(s){
+var rows='';
+s.forEach(function(d){var m=d.data(),me=d.id===CL.user.uid;
+rows+='<div class="item"><div><b>'+esc(m.email||d.id)+'</b>'+(me?' <small>(you)</small>':'')+'<br><small>'+esc(m.role)+'</small></div>'+(me?'':'<button class="btn alt sm" data-a="rmmember" data-id="'+d.id+'">'+(S.arm==='mb'+d.id?'Tap again to remove':'Remove')+'</button>')+'</div>'});
+var e=$('tm');if(e)e.innerHTML=rows||'<p class="note">No members.</p>'},function(err){var e=$('tm');if(e)e.innerHTML='<p class="note">'+esc(errMsg(err))+'</p>'})}
+function vAudit(){return '<h2>Activity log</h2><p class="note">The last 100 changes. Entries cannot be edited or deleted.</p><div id="al"><p class="note">Loading…</p></div>'}
+function loadAudit(){
+FS.getDocs(FS.query(FS.collection(CL.db,'workspaces',CL.wid,'audit'),FS.orderBy('at','desc'),FS.limit(100))).then(function(s){
+var h='';
+s.forEach(function(d){var a=d.data(),t=a.at&&a.at.toMillis?new Date(a.at.toMillis()):(typeof a.at==='number'?new Date(a.at):null);
+var ts=t?t.getFullYear()+'-'+('0'+(t.getMonth()+1)).slice(-2)+'-'+('0'+t.getDate()).slice(-2)+' '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2):'';
+h+='<div class="item" style="display:block"><b>'+esc(a.email||'')+'</b> <small class="note">'+ts+'</small><br><small>'+esc(a.text||'')+'</small></div>'});
+var e=$('al');if(e)e.innerHTML=h||'<p class="note">No activity yet.</p>'},function(err){var e=$('al');if(e)e.innerHTML='<p class="note">'+esc(errMsg(err))+'</p>'})}
+function applyRO(){
+document.querySelectorAll('#app input,#app select,#app textarea').forEach(function(e){if(!ROOK[e.id])e.disabled=true});
+document.querySelectorAll('#app [data-a]').forEach(function(b){if(!ROA[b.dataset.a])b.style.display='none'})}
+
+lockShow();
+if(CLOUDMODE){startCloud()}else{render()}
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+})();
+</script>
+</body>
+</html>
