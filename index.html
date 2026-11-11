@@ -177,7 +177,12 @@ function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+
 function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function money(n){return '৳ '+(Math.round(n*100)/100).toLocaleString('en-US')}
 function dmy(d){var p=String(d).split('-');return p.length==3?p[2]+'-'+p[1]+'-'+p[0]:d}
-function num(v){return parseFloat(v)||0}
+function bn2en(t){return String(t==null?'':t).replace(/[\u09E6-\u09EF]/g,function(c){return c.charCodeAt(0)-0x09E6}).replace(/[\u0660-\u0669]/g,function(c){return c.charCodeAt(0)-0x0660}).replace(/[\u06F0-\u06F9]/g,function(c){return c.charCodeAt(0)-0x06F0}).replace(/[\u0964\u066B\u060C]/g,'.').replace(/,/g,'')}
+function num(v){return parseFloat(bn2en(v))||0}
+function numFix(r){(r.querySelectorAll?r.querySelectorAll('input[type=number]'):[]).forEach(function(i){i.type='text';i.setAttribute('inputmode','decimal');i.setAttribute('autocomplete','off');i.dataset.n='1'})}
+document.addEventListener('input',function(e){var t=e.target;if(t&&t.dataset&&t.dataset.n==='1'){var v=bn2en(t.value);if(v!==t.value){t.value=v;try{t.setSelectionRange(v.length,v.length)}catch(x){}}}},true);
+if(window.MutationObserver){new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType===1)numFix(n)})})}).observe(document.documentElement,{childList:true,subtree:true})}
+numFix(document);
 function pad(n){return ('0000'+n).slice(-4)}
 function daysIn(m){return new Date(+m.slice(0,4),+m.slice(5,7),0).getDate()}
 function newCart(){return{d:today(),cust:'',phone:'',paid:'',lines:[]}}
