@@ -162,7 +162,10 @@ input[type=radio]{width:auto !important;margin:0}
 function $(i){return document.getElementById(i)}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 /* CHANGED: added c.rcpt=c.rcpt||[] */
-function fix(c){c.led=c.led||[];c.debt=c.debt||[];c.stk=c.stk||[];c.sal=c.sal||[];c.mov=c.mov||[];c.wrk=c.wrk||[];c.att=c.att||{};c.adv=c.adv||[];c.invNo=c.invNo||1;c.rcpt=c.rcpt||[];return c}
+function supKey(n){return String(n==null?'':n).normalize('NFC').replace(/[\u200B-\u200D\uFEFF\u00A0\s]+/g,'').toLowerCase()}
+function supClean(n){return String(n==null?'':n).normalize('NFC').replace(/[\u200B\uFEFF]/g,'').replace(/\s+/g,' ').trim()}
+function dTot(r){var q=num(r.qty),u=num(r.rate);return(q&&u)?Math.round(q*u*100)/100:num(r.price)}
+function fix(c){c.led=c.led||[];c.debt=c.debt||[];c.debt.forEach(function(r){if((r.rate===undefined||r.rate==='')&&num(r.qty)>0&&num(r.price)>0)r.rate=num(r.price)/num(r.qty);if(r.rate===undefined)r.rate=''});c.stk=c.stk||[];c.sal=c.sal||[];c.mov=c.mov||[];c.wrk=c.wrk||[];c.att=c.att||{};c.adv=c.adv||[];c.invNo=c.invNo||1;c.rcpt=c.rcpt||[];return c}
 function blank(n){return fix({id:uid(),name:n,ts:Date.now()})}
 function load(){try{var v=localStorage.getItem('fm_data');return v?JSON.parse(v):null}catch(e){return null}}
 var CFG=window.FM_CONFIG||(typeof firebaseConfig!=='undefined'?firebaseConfig:null);
@@ -265,15 +268,20 @@ function debtHtml(){return '<input id="dq" placeholder="Search supplier or mater
 function debtTable(c){
 var q=S.dq.trim().toLowerCase(),tp=0,tpd=0,body='';
 var a=c.debt.slice().reverse().filter(function(r){return !q||((r.sup||'')+' '+(r.item||'')).toLowerCase().indexOf(q)>-1}).sort(function(x,y){return x.d<y.d?1:x.d>y.d?-1:0});
-a.forEach(function(r){tp+=num(r.price);tpd+=num(r.paid);var left=num(r.price)-num(r.paid);
-function f(k,t,ph){return '<td><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+'value="'+esc(r[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="debt" data-id="'+r.id+'"></td>'}
-body+='<tr>'+f('d','date')+f('sup','','Supplier')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(r.unit==='ton'?'':' selected')+'>kg</option><option'+(r.unit==='ton'?' selected':'')+'>ton</option></select></div></td>'+f('price','number')+f('paid','number')+'<td class="r '+(left>0?'neg':'')+'">'+money(left)+'</td><td><button class="x" data-a="del" data-k="debt" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='debt'+r.id?'?':'×')+'</button></td></tr>'});
-var g={};c.debt.forEach(function(r){var k=(r.sup||'(no name)').trim().toLowerCase();if(!g[k])g[k]={n:(r.sup||'(no name)').trim(),p:0,d:0};g[k].p+=num(r.price);g[k].d+=num(r.paid)});
+a.forEach(function(r){var tot=dTot(r),auto=!!(num(r.qty)&&num(r.rate));tp+=tot;tpd+=num(r.paid);var left=tot-num(r.paid);
+function f(k,t,ph,x){return '<td><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+(x||'')+'value="'+esc(r[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="debt" data-id="'+r.id+'"></td>'}
+var rateV=(r.rate===''||r.rate==null)?'':Math.round(num(r.rate)*100)/100;
+var un=r.unit==='ton'||r.unit==='bag'?r.unit:'kg';
+var totCell=auto?'<td><input type="text" inputmode="decimal" readonly tabindex="-1" value="'+esc(tot)+'" style="font-weight:700;opacity:.9" title="Auto: quantity × price per unit"></td>':f('price','number','Total');
+body+='<tr>'+f('d','date')+f('sup','','Supplier','list="dsup" ')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(un==='kg'?' selected':'')+'>kg</option><option'+(un==='ton'?' selected':'')+'>ton</option><option'+(un==='bag'?' selected':'')+'>bag</option></select></div></td>'
++'<td><input type="number" inputmode="decimal" value="'+esc(rateV)+'" placeholder="per '+un+'" data-f="rate" data-k="debt" data-id="'+r.id+'"></td>'+totCell+f('paid','number')+'<td class="r '+(left>0?'neg':'')+'">'+money(left)+'</td><td><button class="x" data-a="del" data-k="debt" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='debt'+r.id?'?':'×')+'</button></td></tr>'});
+var g={},names={};c.debt.forEach(function(r){var nm=supClean(r.sup)||'(no name)',k=supKey(nm)||'(no name)';if(!g[k])g[k]={n:nm,p:0,d:0};g[k].p+=dTot(r);g[k].d+=num(r.paid);if(supClean(r.sup))names[k]=names[k]||nm});
 var gs=Object.keys(g).map(function(k){return g[k]}).filter(function(x){return !q||x.n.toLowerCase().indexOf(q)>-1}),sb='';
 gs.forEach(function(x){sb+='<tr><td class="r" style="text-align:left">'+esc(x.n)+'</td><td class="r">'+money(x.p)+'</td><td class="r">'+money(x.d)+'</td><td class="r '+(x.p-x.d>0?'neg':'')+'"><b>'+money(x.p-x.d)+'</b></td></tr>'});
-return '<div class="tiles"><div class="tile"><small>Total price</small><b>'+money(tp)+'</b></div><div class="tile"><small>Paid</small><b class="pos">'+money(tpd)+'</b></div><div class="tile"><small>Left to pay</small><b class="neg">'+money(tp-tpd)+'</b></div></div>'
-+'<div class="sheet"><table style="min-width:900px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:160px">Quantity (kg / ton)</th><th style="width:110px">Price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="8" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
-+'<h3>By supplier</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Total</th><th>Paid</th><th>Left</th></tr>'+(sb||'<tr><td colspan="4" class="r" style="text-align:left">No suppliers yet.</td></tr>')+'</table></div><p class="note">When you pay a supplier later, change the Paid cell. Left is calculated for you.</p>'}
+var dl='<datalist id="dsup">'+Object.keys(names).map(function(k){return '<option value="'+esc(names[k])+'">'}).join('')+'</datalist>';
+return '<div class="tiles"><div class="tile"><small>Total price</small><b>'+money(tp)+'</b></div><div class="tile"><small>Paid</small><b class="pos">'+money(tpd)+'</b></div><div class="tile"><small>Left to pay</small><b class="neg">'+money(tp-tpd)+'</b></div></div>'+dl
++'<div class="sheet"><table style="min-width:1050px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:160px">Quantity (kg / ton / bag)</th><th style="width:110px">Price per unit ৳</th><th style="width:120px">Total price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="9" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
++'<h3>By supplier</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Total</th><th>Paid</th><th>Left</th></tr>'+(sb||'<tr><td colspan="4" class="r" style="text-align:left">No suppliers yet.</td></tr>')+'</table></div><p class="note">Total price = quantity × price per unit (automatic). For a payment only, fill the Paid cell. Left is calculated for you. Rows with the same supplier name are added together.</p>'}
 
 /* stock */
 function vStk(){return '<h2>Stock inventory</h2>'+tabs(['stock:Stock','sell:Sell','total:Total stock'],S.tab,'tab')+(S.tab==='stock'?stockTab():S.tab==='sell'?sellTab():totalTab())}
@@ -558,7 +566,7 @@ h+='<h3>Income &amp; expense entries</h3>';
 var lr=c.led.filter(function(r){return r.d===d});
 h+=lr.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Note</th><th>Income</th><th>Expense</th></tr>'+lr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.note)+'</td><td class="r">'+money(num(r.inc))+'</td><td class="r">'+money(num(r.exp))+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>';
 var dr=c.debt.filter(function(r){return r.d===d});
-if(dr.length)h+='<h3>Factory debt entries</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Material</th><th>Quantity</th><th>Price</th><th>Paid</th></tr>'+dr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.sup)+'</td><td class="r">'+esc(r.item)+'</td><td class="r">'+(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-')+'</td><td class="r">'+money(num(r.price))+'</td><td class="r">'+money(num(r.paid))+'</td></tr>'}).join('')+'</table></div>';
+if(dr.length)h+='<h3>Factory debt entries</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Material</th><th>Quantity</th><th>Price/unit</th><th>Total</th><th>Paid</th></tr>'+dr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.sup)+'</td><td class="r">'+esc(r.item)+'</td><td class="r">'+(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-')+'</td><td class="r">'+(num(r.rate)?money(num(r.rate)):'-')+'</td><td class="r">'+money(dTot(r))+'</td><td class="r">'+money(num(r.paid))+'</td></tr>'}).join('')+'</table></div>';
 var mv=c.mov.filter(function(m){return m.d===d});
 h+='<h3>Stock movements</h3>'+(mv.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Item</th><th>Type</th><th>Qty</th></tr>'+mv.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(m.name)+'</td><td class="r">'+TYPES[m.type]+'</td><td class="r '+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>');
 h+='<h3>Stock at end of this day</h3>'+(c.stk.length?'<div class="sheet"><table style="min-width:360px"><tr><th>Item</th><th>In stock</th></tr>'+c.stk.map(function(it){return '<tr><td class="r" style="text-align:left">'+esc(it.name)+'</td><td class="r"><b>'+qtyAt(c,it,d)+' '+esc(it.unit)+'</b></td></tr>'}).join('')+'</table></div>':'<p class="note">No items.</p>');
@@ -611,10 +619,13 @@ document.addEventListener('change',function(e){
 var t=e.target;
 if(t.dataset&&t.dataset.f){var c=S.cid?C():null,it=find(t.dataset.k,t.dataset.id);if(!it)return;
 var f=t.dataset.f,v=t.value,k=t.dataset.k;
-if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid')v=v===''?'':parseFloat(bn2en(v));
+if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid'||f==='rate')v=v===''?'':parseFloat(bn2en(v));
 if(f==='d'&&!v)v=today();
 if(k==='stk'&&f==='qty'){var nq=num(v),dl=nq-num(it.qty);if(dl)mvAdj(c,it,dl,'set','',S.sd);save();render();return}
-it[f]=v;save();render()}
+if(k==='debt'&&f==='sup')v=supClean(v);
+it[f]=v;
+if(k==='debt'&&(f==='qty'||f==='rate'||f==='unit')&&num(it.qty)&&num(it.rate))it.price=Math.round(num(it.qty)*num(it.rate)*100)/100;
+save();render()}
 else if(t.dataset&&t.dataset.r){
 var cc=C(),rr=cc.rcpt.filter(function(x){return x.id===S.rid})[0];
 if(!rr)return;
@@ -690,7 +701,7 @@ else if(a==='del'){var k=b.dataset.k,key=k+id;
 if(S.arm!==key){S.arm=key;render();return}
 S.arm='';c[k]=c[k].filter(function(x){return x.id!==id});save();render()}
 else if(a==='addrow'){S.lq='';var m=S.month,nr2={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',inc:'',exp:'',t:(S.atab==='exp'?'exp':'inc')};c.led.push(nr2);FOC='input[data-f=note][data-id="'+nr2.id+'"]';save();render()}
-else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
+else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',rate:'',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
 else if(a==='addstk'){var n2=$('sn').value.trim();if(!n2){toast('Enter the item name');return}
 var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd);save();render()}
 else if(a==='in'||a==='out'){var it2=find('stk',id),v=num($('adj-'+id).value);if(v<=0){toast('Enter an amount');return}
@@ -844,7 +855,7 @@ function cname(cid){var c=D.companies.filter(function(x){return x.id===cid})[0];
 function descr(coll,d){
 try{
 if(coll==='led')return (d.note||'row')+(d.inc?' +'+d.inc:'')+(d.exp?' −'+d.exp:'');
-if(coll==='debt')return (d.sup||'')+' '+(d.item||'')+(d.price?' '+d.price:'');
+if(coll==='debt')return (d.sup||'')+' '+(d.item||'')+(dTot(d)?' '+dTot(d):'');
 if(coll==='stk')return d.name||'';
 if(coll==='sal')return (d.no||'')+' '+(d.cust||'');
 if(coll==='mov')return (d.type||'')+' '+(d.name||'')+' '+(d.delta||'');
