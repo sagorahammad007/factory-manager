@@ -235,7 +235,7 @@ return h}
 /* CHANGED: added Receipts button */
 function vHome(){
 function b(v,t,s){return '<button class="big" data-a="go" data-v="'+v+'">'+t+'<small>'+s+'</small></button>'}
-return '<h2>'+esc(C().name)+'</h2>'+b('acc','Accounts','Daily income &amp; expense, and factory debt')+b('stk','Stock inventory','Stock, sell with invoice, and total stock')+b('rcpt','Receipts','Create and print money receipts')+b('wrk','Worker data','Workers, attendance and salary')+b('day','Date report','See everything for any specific date')}
+return '<h2>'+esc(C().name)+'</h2>'+b('acc','Accounts','Daily income &amp; expense, and factory debt')+b('stk','Stock inventory','Stock, sell with invoice, and total stock')+b('wrk','Worker data','Workers, attendance and salary')+b('bi','Business insights','Trends, top products, expense changes')+b('po','Purchase order','Make a purchase order for a supplier')+b('day','Date report','See everything for any specific date')}
 
 function tabs(arr,cur,act){return '<div class="tabs">'+arr.map(function(a){var p=a.split(':');return '<button class="tab'+(cur===p[0]?' on':'')+'" data-a="'+act+'" data-t="'+p[0]+'">'+p[1]+'</button>'}).join('')+'</div>'}
 
@@ -298,7 +298,7 @@ var q=S.sq.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toL
 if(!c.stk.length)return '<p class="note">Add products in the Stock tab first.</p>';
 return a.length?a.map(function(i){return '<button class="chip" data-a="addline" data-id="'+i.id+'">'+esc(i.name)+'<small>'+esc(num(i.qty))+' '+esc(i.unit)+'</small></button>'}).join(''):'<p class="note">No product matches.</p>'}
 function sellTab(){
-var c=C(),h='<input id="sq" placeholder="Search product to sell..." value="'+esc(S.sq)+'" autocomplete="off"><div id="sr" style="margin-top:8px">'+sellRes(c)+'</div><h3>New invoice</h3><div class="card" id="cartbox">'+cartHtml(c)+'</div><h3>Recent invoices</h3>';
+var c=C(),h='<input id="sq" placeholder="Search product to sell..." value="'+esc(S.sq)+'" autocomplete="off"><div class="g2" style="margin:8px 0"><button class="btn alt" data-a="scan">Scan barcode / QR</button><button class="btn alt" data-a="go" data-v="rcpt">Money receipts</button></div><div id="sr" style="margin-top:8px">'+sellRes(c)+'</div><h3>New invoice</h3><div class="card" id="cartbox">'+cartHtml(c)+'</div><h3>Recent invoices</h3>';
 if(!c.sal.length)h+='<p class="note">No invoices yet.</p>';
 c.sal.slice(0,20).forEach(function(s){var t=saleTotal(s),d=t-s.paid;h+='<div class="item" data-a="openinv" data-id="'+s.id+'"><div><b>'+esc(s.no)+' · '+esc(s.cust||'Walk-in')+'</b><br><small>'+esc(dmy(s.d))+'</small></div><div style="text-align:right"><b>'+money(t)+'</b><br>'+(d>0?'<span class="due">Due '+money(d)+'</span>':'<small>Paid</small>')+'</div></div>'});
 return h}
@@ -361,9 +361,10 @@ return h+'<p class="note">Total production till today by factory = opening stock
 function vInv(){
 var c=C(),s=c.sal.filter(function(x){return x.id===S.inv})[0];
 if(!s)return '<p class="note">Invoice not found.</p>';
+if(S.mu)return vMush(c,s);
 var t=saleTotal(s),rows=s.lines.map(function(l){return '<tr><td>'+esc(l.name)+'</td><td class="r">'+l.qty+' '+esc(l.unit)+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+money(l.qty*l.price)+'</td></tr>'}).join('');
 return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>INVOICE</div><div class="rm"><span>No: '+esc(s.no)+'</span><span>Date: '+esc(dmy(s.d))+'</span></div><div><b>Customer:</b> '+esc(s.cust||'Walk-in customer')+(s.phone?' ('+esc(s.phone)+')':'')+'</div><table><tr><th>Item</th><th class="r">Qty</th><th class="r">Price</th><th class="r">Amount</th></tr>'+rows+'</table><div class="rt"><div><span>Total</span><span>'+money(t)+'</span></div><div><span>Received</span><span>'+money(s.paid)+'</span></div><div class="gt"><span>Due</span><span>'+money(t-s.paid)+'</span></div></div><p style="text-align:center;color:#555;font-size:12px;margin-top:14px">Thank you for your business.</p></div>'
-+'<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn wa" style="background:#25d366" data-a="wa">Send on WhatsApp</button><button class="btn alt" data-a="back">Back to sales</button><button class="btn alt" data-a="delinv">'+(S.arm==='inv'?'Tap again to delete (stock is returned)':'Delete invoice')+'</button></div><p class="note">For a PDF, choose “Save as PDF” in the print window, then attach it in WhatsApp.</p>'}
++'<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn wa" style="background:#25d366" data-a="wa">Send on WhatsApp</button><button class="btn alt" data-a="mush">Mushak-6.3 VAT invoice</button><button class="btn alt" data-a="back">Back to sales</button><button class="btn alt" data-a="delinv">'+(S.arm==='inv'?'Tap again to delete (stock is returned)':'Delete invoice')+'</button></div><p class="note">For a PDF, choose “Save as PDF” in the print window, then attach it in WhatsApp.</p>'}
 
 /* ============ RECEIPT MAKER (NEW) ============ */
 function rcptTotal(r){
@@ -492,10 +493,10 @@ function rcptSet(t){
 
 /* workers */
 function status(c,d,id){return (c.att[d]||{})[id]||''}
-function earned(c,w){var e=0,t=today(),dd=0;Object.keys(c.att).forEach(function(k){if(k>t)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});return{days:dd,earn:e}}
-function advOf(c,id){return c.adv.filter(function(a){return a.wid===id}).reduce(function(s,a){return s+num(a.amt)},0)}
+function earned(c,w){var e=0,t=today(),dd=0;Object.keys(c.att).forEach(function(k){if(k>t)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});c.adv.forEach(function(a){if(a.wid===w.id&&(a.k==='bonus'||a.k==='ot'))e+=num(a.amt)});return{days:dd,earn:e}}
+function advOf(c,id){return c.adv.filter(function(a){return a.wid===id&&a.k!=='bonus'&&a.k!=='ot'&&a.k!=='paid'}).reduce(function(s,a){return s+num(a.amt)},0)}
 function vWrk(){
-var c=C(),h='<h2>Worker data</h2><input id="wsq" placeholder="Search worker by name, phone or role..." value="'+esc(S.wsq)+'" autocomplete="off"><div id="wsr" style="margin:8px 0">'+wsRes(c)+'</div>'+tabs(['info:Workers','att:Attendance','sal:Salary'],S.wtab,'wtab');
+var c=C(),h='<h2>Worker data</h2><input id="wsq" placeholder="Search worker by name, phone or role..." value="'+esc(S.wsq)+'" autocomplete="off"><div id="wsr" style="margin:8px 0">'+wsRes(c)+'</div>'+tabs(['info:Workers','att:Attendance','sal:Salary','slip:Slips'],S.wtab,'wtab');
 if(S.wtab==='info'){
 h+='<button class="btn full" style="margin:0 0 12px" data-a="addw">+ Add worker</button>';
 if(!c.wrk.length)h+='<p class="note">No workers yet.</p>';
@@ -504,6 +505,7 @@ function f(k,l,t,ph){return '<div class="f"><label>'+l+'</label><input '+(t?'typ
 h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('joined','Joining date','date')+f('note','Address / note')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
 return h+'<p class="note">Salary is monthly. The daily amount is worked out from attendance: monthly salary ÷ days in that month, for each day present.</p>'}
 if(S.wtab==='att')return h+attHtml(c);
+if(S.wtab==='slip')return h+slipTab(c);
 return h+salHtml(c)}
 function attHtml(c){
 var d=S.date,day=c.att[d]||{},h='<input type="date" id="ad" value="'+d+'"><button class="btn alt full" style="margin:8px 0" data-a="allp">Mark all present</button>';
@@ -521,14 +523,15 @@ Object.keys(c.att).forEach(function(x){if(x.slice(0,7)===m&&c.att[x][w.id])k[c.a
 h+='<tr><td class="r" style="text-align:left">'+esc(w.name)+'</td><td class="r">'+k.P+'</td><td class="r">'+k.H+'</td><td class="r">'+k.A+'</td><td class="r">'+k.L+'</td><td class="r"><b>'+money((k.P+k.H/2)*num(w.wage)/daysIn(m))+'</b></td></tr>'});
 return h+'</table></div>'}
 function salHtml(c){
-var h='<div class="sheet"><table style="min-width:600px"><tr><th>Worker</th><th>Days</th><th>Monthly</th><th>Earned</th><th>Advance</th><th>Due</th></tr>',te=0,ta=0;
-c.wrk.forEach(function(w){var e=earned(c,w),a=advOf(c,w.id);te+=e.earn;ta+=a;
+var h='<div class="sheet"><table style="min-width:600px"><tr><th>Worker</th><th>Days</th><th>Monthly</th><th>Earned</th><th>Adv / paid</th><th>Due</th></tr>',te=0,ta=0;
+c.wrk.forEach(function(w){var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id);te+=e.earn;ta+=a;
 h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+e.days+'</td><td class="r">'+money(num(w.wage))+'</td><td class="r">'+money(e.earn)+'</td><td class="r">'+money(a)+'</td><td class="r '+(e.earn-a<0?'neg':'pos')+'"><b>'+money(e.earn-a)+'</b></td></tr>'});
 h+='<tr class="tot"><td colspan="3">Total</td><td class="r">'+money(te)+'</td><td class="r">'+money(ta)+'</td><td class="r">'+money(te-ta)+'</td></tr></table></div><p class="note">Earned = salary for the days present, up to today, from the attendance sheet. Due = Earned − Advance.</p>';
 h+='<h3>Give advance</h3><div class="card"><label class="note">Worker</label><select id="aw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2"><div><label>Date</label><input type="date" id="adt" value="'+today()+'"></div><div><label>Amount ৳</label><input type="number" inputmode="decimal" id="aam"></div></div><label class="note">Note (optional)</label><input id="ano"><button class="btn full" data-a="addadv">Save advance</button></div>';
+h+=payCard(c);
 h+='<h3>Advance list</h3>';
 if(!c.adv.length)h+='<p class="note">No advances yet.</p>';
-c.adv.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(a){var w=c.wrk.filter(function(x){return x.id===a.wid})[0];
+c.adv.filter(function(x){return x.k!=='paid'}).sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(a){var w=c.wrk.filter(function(x){return x.id===a.wid})[0];
 h+='<div class="item"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+esc(dmy(a.d))+(a.note?' · '+esc(a.note):'')+'</small></div><div style="text-align:right"><b>'+money(num(a.amt))+'</b><br><button class="btn alt sm" data-a="del" data-k="adv" data-id="'+a.id+'">'+armLbl('adv'+a.id)+'</button></div></div>'});
 return h}
 
@@ -539,7 +542,7 @@ return a.length?a.map(function(w){return '<button class="chip" data-a="wopen" da
 function vWp(){
 var c=C(),w=c.wrk.filter(function(x){return x.id===S.wid})[0];
 if(!w)return '<p class="note">Worker not found.</p>';
-var e=earned(c,w),a=advOf(c,w.id),m=S.wm,ms={},days=[],n={P:0,A:0,L:0,H:0},NAME={P:'Present',A:'Absent',L:'Leave',H:'Half day'};
+var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id),m=S.wm,ms={},days=[],n={P:0,A:0,L:0,H:0},NAME={P:'Present',A:'Absent',L:'Leave',H:'Half day'};
 Object.keys(c.att).sort().forEach(function(k){var s=c.att[k][w.id];if(!s)return;var mm=k.slice(0,7),o=ms[mm]||(ms[mm]={P:0,A:0,L:0,H:0});o[s]++;if(mm===m){n[s]++;days.push([k,s])}});
 var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div><div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+'</div>';
 h+='<div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Days present (all time)</small><b>'+e.days+'</b></div><div class="tile"><small>Earned till today</small><b>'+money(e.earn)+'</b></div><div class="tile"><small>Advance taken</small><b class="neg">'+money(a)+'</b></div><div class="tile"><small>Due</small><b class="'+(e.earn-a<0?'neg':'pos')+'">'+money(e.earn-a)+'</b></div></div>';
@@ -547,7 +550,7 @@ var mk=Object.keys(ms).sort().reverse();
 h+='<h3>Attendance by month</h3><div class="sheet"><table style="min-width:480px"><tr><th>Month</th><th>P</th><th>H</th><th>A</th><th>L</th><th>Earned ৳</th></tr>'+(mk.length?mk.map(function(k){var o=ms[k];return '<tr><td class="r" style="text-align:left">'+k+'</td><td class="r">'+o.P+'</td><td class="r">'+o.H+'</td><td class="r">'+o.A+'</td><td class="r">'+o.L+'</td><td class="r"><b>'+money((o.P+o.H/2)*num(w.wage)/daysIn(k))+'</b></td></tr>'}).join(''):'<tr><td colspan="6" class="r" style="text-align:left">No attendance yet.</td></tr>')+'</table></div>';
 h+='<h3>Day by day</h3><input type="month" id="wm" value="'+m+'">';
 h+=days.length?'<div class="sheet" style="margin-top:8px"><table style="min-width:300px"><tr><th>Date</th><th>Status</th></tr>'+days.map(function(d){return '<tr><td class="r" style="text-align:left">'+dmy(d[0])+'</td><td class="r '+(d[1]==='P'?'pos':d[1]==='A'?'neg':'')+'">'+NAME[d[1]]+'</td></tr>'}).join('')+'</table></div><p class="note">This month: Present '+n.P+' · Half day '+n.H+' · Absent '+n.A+' · Leave '+n.L+'</p>':'<p class="note">No attendance marked in this month.</p>';
-var ad=c.adv.filter(function(x){return x.wid===w.id}).sort(function(x,y){return x.d<y.d?1:x.d>y.d?-1:0});
+var ad=c.adv.filter(function(x){return x.wid===w.id&&x.k!=='paid'}).sort(function(x,y){return x.d<y.d?1:x.d>y.d?-1:0});
 h+='<h3>Advances</h3>'+(ad.length?ad.map(function(x){return '<div class="item"><div><b>'+esc(dmy(x.d))+'</b><br><small>'+esc(x.note||'')+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join(''):'<p class="note">No advances.</p>');
 return h}
 
@@ -583,13 +586,13 @@ var c=S.cid?C():null;
 document.body.classList.add('co');document.body.classList.toggle('front',S.v==='co');$('tick').innerHTML=tickHtml();
 $('bk').hidden=S.v==='co';$('lg').style.display=S.v==='co'?'':'none';
 $('tt').textContent=S.v==='acct'?'Account':S.v==='team'?'Team':S.v==='audit'?'Activity':S.v==='rcpt'?'Receipts':(S.v==='co'||!c)?'Factory Manager':c.name;
-$('app').innerHTML=({co:vCo,home:vHome,acc:vAcc,stk:vStk,wrk:vWrk,day:vDay,inv:vInv,wp:vWp,acct:vAcct,team:vTeam,audit:vAudit,rcpt:vRcpt})[S.v]();
+$('app').innerHTML=({co:vCo,home:vHome,acc:vAcc,stk:vStk,wrk:vWrk,day:vDay,inv:vInv,wp:vWp,acct:vAcct,team:vTeam,audit:vAudit,rcpt:vRcpt,bi:vBi,po:vPo,sps:vSps})[S.v]();
 $('dlg').innerHTML=dlgHtml();
 if(RO)applyRO();setStatus();if(CLOUDMODE&&CL.ready){if(S.v==='team')loadTeam();if(S.v==='audit')loadAudit()}
 anim();
 if(FOC){var fe=document.querySelector(FOC);FOC='';if(fe){fe.scrollIntoView({block:'center'});fe.focus()}}}
 function find(k,id){var l=k==='co'?D.companies:C()[k];return l.filter(function(x){return x.id===id})[0]}
-function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else if(S.v==='rcpt'){if(S.rtab==='print')S.rtab='form';else if(S.rtab==='form'){S.rtab='list';S.rid=''}else S.v='home'}else S.v='home';render();window.scrollTo(0,0)}
+function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else if(S.v==='rcpt'){if(S.rtab==='print')S.rtab='form';else if(S.rtab==='form'){S.rtab='list';S.rid=''}else{S.v='stk';S.tab='sell'}}else if(S.v==='sps'){S.v='wrk';S.wtab='slip'}else S.v='home';render();window.scrollTo(0,0)}
 
 /* ---------- events ---------- */
 var lpT=0,lpFired=false,lpX=0,lpY=0;
@@ -714,12 +717,32 @@ if(tot>num(p.qty)){toast('Only '+num(p.qty)+' '+p.unit+' of '+p.name+' in stock'
 var s={id:uid(),no:'INV-'+pad(c.invNo),d:S.cart.d||today(),cust:S.cart.cust.trim(),phone:S.cart.phone.trim(),paid:num(S.cart.paid),lines:ls.map(function(l){var p2=item(c,l.pid);p2.price=num(l.price);return{pid:l.pid,name:p2.name,unit:p2.unit,qty:num(l.qty),price:num(l.price)}})};
 s.lines.forEach(function(l){mvAdj(c,item(c,l.pid),-l.qty,'sale',s.no,s.d)});
 c.invNo++;c.sal.unshift(s);S.cart=newCart();S.inv=s.id;S.v='inv';S.arm='';save();render();window.scrollTo(0,0)}
-else if(a==='openinv'){S.inv=id;S.v='inv';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='openinv'){S.mu=0;S.inv=id;S.v='inv';S.arm='';render();window.scrollTo(0,0)}
 else if(a==='delinv'){
 if(S.arm!=='inv'){S.arm='inv';render();return}
 var sl=c.sal.filter(function(x){return x.id===S.inv})[0];
 if(sl){sl.lines.forEach(function(l){var p3=item(c,l.pid);if(p3)p3.qty=num(p3.qty)+l.qty});c.mov=c.mov.filter(function(m){return !(m.type==='sale'&&m.note===sl.no)});c.sal=c.sal.filter(function(x){return x.id!==sl.id})}
 S.arm='';save();toast('Invoice deleted, stock returned');back()}
+else if(a==='scan'){scanStart()}
+else if(a==='mush'){var V=vatCfg();var r=prompt('VAT rate % (standard 15, 0 = none)',V.rate);if(r===null)return;V.rate=num(r);V.bin=prompt('Your business BIN',V.bin)||V.bin;V.addr=prompt('Your business address',V.addr)||V.addr;V.cbin=prompt('Customer BIN / NID (optional)',V.cbin)||'';localStorage.setItem('fm_vat',JSON.stringify(V));S.mu=1;render()}
+else if(a==='mback'){S.mu=0;render()}
+else if(a==='addpay'){var wid2=$('pw').value,k2=$('pk').value,am2=num($('pa').value),hr=num($('ph').value);if(!wid2){toast('Add a worker first');return}
+if(k2==='ot'){var wk2=c.wrk.filter(function(x){return x.id===wid2})[0];am2=Math.round(hr*num($('pr').value||(num(wk2.wage)/30/8)*1.5)*100)/100}
+if(am2<=0){toast('Enter amount (or hours for overtime)');return}
+var nid2=uid();c.adv.push({id:nid2,wid:wid2,d:$('pd').value||today(),amt:am2,k:k2,note:(k2==='ot'?hr+' hr overtime. ':'')+$('pn').value.trim()});save();if(k2==='loan'){S.sp=nid2;S.v='sps'}render();window.scrollTo(0,0)}
+else if(a==='popr'){S.po={sup:$('ps').value,d:$('pdt').value,txt:$('pt').value,vat:num($('pv').value)};render()}
+else if(a==='poedit'){S.po=null;render()}
+else if(a==='opsp'){S.sp=id;S.v='sps';render();window.scrollTo(0,0)}
+else if(a==='delsp'){var r0=c.adv.filter(function(x){return x.id===S.sp})[0];if(!r0)return;if(r0.s){toast('This advance was already deducted in a salary slip. Delete that salary slip first.');return}
+if(!confirm('Delete this slip?'))return;if(r0.k==='paid')c.adv.forEach(function(x){if(x.p===r0.id){delete x.s;delete x.p}});c.adv=c.adv.filter(function(x){return x.id!==r0.id});save();S.v='wrk';S.wtab='slip';render()}
+else if(a==='paysal'){var w3=$('sw').value,m3=$('sm').value,d3=$('sdt').value||today(),wk3=c.wrk.filter(function(x){return x.id===w3})[0];if(!wk3||!m3){toast('Choose a worker and a month');return}
+var P3=0,H3=0;Object.keys(c.att).forEach(function(k){var s3=c.att[k][w3];if(s3&&k.slice(0,7)===m3){if(s3==='P')P3++;else if(s3==='H')H3++}});
+var base=Math.round((P3+H3/2)*num(wk3.wage)/daysIn(m3)*100)/100,ot3=0,bn3=0;c.adv.forEach(function(x){if(x.wid===w3&&x.d.slice(0,7)===m3){if(x.k==='ot')ot3+=num(x.amt);if(x.k==='bonus')bn3+=num(x.amt)}});
+var gross=base+ot3+bn3,pend=c.adv.filter(function(x){return x.wid===w3&&x.k!=='bonus'&&x.k!=='ot'&&x.k!=='paid'&&!x.s&&x.d<=d3}).sort(function(x,y){return x.d<y.d?-1:1}),ids=[],ded=0;
+pend.forEach(function(x){if(ded+num(x.amt)<=gross){ded+=num(x.amt);ids.push(x.id)}});var net=Math.round((gross-ded)*100)/100;
+if(c.adv.some(function(x){return x.k==='paid'&&x.wid===w3&&x.m===m3})&&!confirm('A salary slip for this month already exists. Make another?'))return;
+if(!confirm(wk3.name+' · '+m3+'\nSalary '+money(base)+' + overtime '+money(ot3)+' + bonus '+money(bn3)+'\nAdvance deducted '+money(ded)+'\nNet payment '+money(net)+'\nPay and make slip?'))return;
+var pid=uid();c.adv.forEach(function(x){if(ids.indexOf(x.id)>-1){x.s=1;x.p=pid}});c.adv.push({id:pid,wid:w3,d:d3,k:'paid',m:m3,amt:net,net:net,base:base,ot:ot3,bonus:bn3,ded:ded,ids:ids,pd:P3,hd:H3,note:'salary '+m3});save();S.sp=pid;S.v='sps';render();window.scrollTo(0,0)}
 else if(a==='pr'){window.print()}
 else if(a==='wa'){
 var sv=c.sal.filter(function(x){return x.id===S.inv})[0],tt=saleTotal(sv),msg='*'+c.name+'*\nInvoice '+sv.no+' | '+dmy(sv.d)+'\nCustomer: '+(sv.cust||'Walk-in')+'\n';
@@ -735,9 +758,9 @@ if(j>=0&&j<c.wrk.length){var tmp=c.wrk[ix];c.wrk[ix]=c.wrk[j];c.wrk[j]=tmp;save(
 else if(a==='mvend'){S.mv='';render()}
 else if(a==='addadv'){
 var wid=$('aw').value,am=num($('aam').value);if(!wid){toast('Add a worker first');return}if(am<=0){toast('Enter the advance amount');return}
-var wk=c.wrk.filter(function(x){return x.id===wid})[0],due=earned(c,wk).earn-advOf(c,wid);
+var wk=c.wrk.filter(function(x){return x.id===wid})[0],due=earned(c,wk).earn-advOf(c,wid)-paidOf(c,wid);
 if(am>Math.floor(due*100)/100){toast('Advance cannot be more than due: '+money(Math.max(0,due)));return}
-c.adv.push({id:uid(),wid:wid,d:$('adt').value||today(),amt:am,note:$('ano').value.trim()});save();render()}
+var nid=uid();c.adv.push({id:nid,wid:wid,d:$('adt').value||today(),amt:am,k:'adv',note:$('ano').value.trim()});save();S.sp=nid;S.v='sps';render();window.scrollTo(0,0)}
 else if(a==='signout'){if(CLOUDMODE&&FA&&CL.auth)FA.signOut(CL.auth)}
 else if(a==='newinv'){var code=genCode(),role=$('ir').value;
 FS.setDoc(FS.doc(CL.db,'invites',code),{wid:CL.wid,role:role,used:false,createdBy:CL.user.uid,createdAt:FS.serverTimestamp()}).then(function(){S.invite={code:code,role:role};render()},function(er){toast(errMsg(er))})}
@@ -841,7 +864,7 @@ function auditOf(cur,sets,dels){
 var lines=[];
 sets.forEach(function(k){var e=cur[k],old=CL.synced[k];
 if(old===undefined){lines.push('Added '+LBL[e.coll]+': '+descr(e.coll,e.data)+' ['+cname(e.cid)+']');return}
-if(e.coll==='wrk'){try{var o=JSON.parse(old);delete o.o;var n=JSON.parse(JSON.stringify(e.data));delete n.o;if(sj(o)===sj(n)){if(lines.indexOf('Changed worker order')<0)lines.push('Changed worker order');return}}catch(x){}}}
+if(e.coll==='wrk'){try{var o=JSON.parse(old);delete o.o;var n=JSON.parse(JSON.stringify(e.data));delete n.o;if(sj(o)===sj(n)){if(lines.indexOf('Changed worker order')<0)lines.push('Changed worker order');return}}catch(x){}}
 lines.push('Edited '+LBL[e.coll]+': '+descr(e.coll,e.data)+' ['+cname(e.cid)+']')});
 dels.forEach(function(k){var p=k.split('|'),old={};try{old=JSON.parse(CL.synced[k])}catch(x){}lines.push('Deleted '+LBL[p[1]]+': '+descr(p[1],old)+' ['+cname(p[0])+']')});
 return lines}
@@ -1060,6 +1083,34 @@ var e=$('al');if(e)e.innerHTML=h||'<p class="note">No activity yet.</p>'},functi
 function applyRO(){
 document.querySelectorAll('#app input,#app select,#app textarea').forEach(function(e){if(!ROOK[e.id])e.disabled=true});
 document.querySelectorAll('#app [data-a]').forEach(function(b){if(!ROA[b.dataset.a])b.style.display='none'})}
+
+function vatCfg(){try{return Object.assign({rate:15,bin:'',addr:'',cbin:''},JSON.parse(localStorage.getItem('fm_vat')||'{}'))}catch(e){return{rate:15,bin:'',addr:'',cbin:''}}}
+function vMush(c,s){var V=vatCfg(),R=V.rate/100,net=0,vt=0,rows=s.lines.map(function(l,i){var v=l.qty*l.price,t=v*R;net+=v;vt+=t;return '<tr><td>'+(i+1)+'</td><td>'+esc(l.name)+'</td><td class="r">'+l.qty+' '+esc(l.unit)+'</td><td class="r">'+money(l.price)+'</td><td class="r">'+money(v)+'</td><td class="r">'+V.rate+'%</td><td class="r">'+money(t)+'</td><td class="r">'+money(v+t)+'</td></tr>'}).join('');
+return '<div id="rcpt"><div class="rh"><b>মূসক-৬.৩ / Mushak-6.3</b><br>কর চালানপত্র / Tax Invoice</div><div><b>Seller:</b> '+esc(c.name)+'<br><b>BIN:</b> '+esc(V.bin)+'<br><b>Address:</b> '+esc(V.addr)+'</div><div class="rm"><span>Challan No: '+esc(s.no)+'</span><span>Date: '+esc(dmy(s.d))+'</span></div><div><b>Buyer:</b> '+esc(s.cust||'Walk-in customer')+(V.cbin?' | BIN/NID: '+esc(V.cbin):'')+(s.phone?' | '+esc(s.phone):'')+'</div><table><tr><th>#</th><th>Description</th><th class="r">Qty</th><th class="r">Unit price (excl. VAT)</th><th class="r">Value</th><th class="r">VAT rate</th><th class="r">VAT</th><th class="r">Total</th></tr>'+rows+'</table><div class="rt"><div><span>Total value (excl. VAT)</span><span>'+money(net)+'</span></div><div><span>Total VAT</span><span>'+money(vt)+'</span></div><div class="gt"><span>Grand total</span><span>'+money(net+vt)+'</span></div></div><p style="font-size:12px;color:#555">Prices are treated as excluding VAT. Check the format with your VAT consultant before filing.</p></div><div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="mback">Back to invoice</button></div>'}
+var scanStream=null;
+function scanStart(){if(!('BarcodeDetector' in window)||!navigator.mediaDevices){toast('Scanning needs Chrome on Android');return}
+var v=document.createElement('video');v.setAttribute('playsinline','');v.style.cssText='position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:99;background:#000';var x=document.createElement('button');x.textContent='Close';x.className='btn';x.style.cssText='position:fixed;top:14px;right:14px;z-index:100';document.body.append(v,x);
+var det=new BarcodeDetector(),on=true;function stop(){on=false;if(scanStream)scanStream.getTracks().forEach(function(t){t.stop()});v.remove();x.remove()}x.onclick=stop;
+navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}}).then(function(st){scanStream=st;v.srcObject=st;v.play();(function tick(){if(!on)return;det.detect(v).then(function(r){if(r.length){var code=r[0].rawValue;stop();S.sq=code;render();toast('Scanned: '+code)}else setTimeout(tick,250)}).catch(function(){setTimeout(tick,400)})})()},function(){stop();toast('Camera not allowed')})}
+function payCard(c){return '<h3>Overtime, bonus or loan</h3><div class="card"><select id="pw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2"><div><label>Type</label><select id="pk"><option value="ot">Overtime (hours)</option><option value="bonus">Bonus / festival</option><option value="loan">Loan (deducted)</option></select></div><div><label>Date</label><input type="date" id="pd" value="'+today()+'"></div></div><div class="g2"><div><label>Amount ৳ (bonus/loan)</label><input type="number" inputmode="decimal" id="pa"></div><div><label>Overtime hours</label><input type="number" inputmode="decimal" id="ph"></div></div><label class="note">Overtime rate per hour (blank = 1.5 × hourly wage)</label><input type="number" inputmode="decimal" id="pr"><label class="note">Note</label><input id="pn"><button class="btn full" data-a="addpay">Save</button></div><p class="note">Overtime and bonus are added to Earned. Loans are deducted like advances.</p>'}
+function vPo(){var c=C(),p=S.po;if(!p)return '<h2>Purchase order</h2><div class="card"><label>Supplier</label><input id="ps" list="sup"><datalist id="sup">'+c.debt.map(function(r){return r.sup}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).map(function(v){return '<option value="'+esc(v)+'">'}).join('')+'</datalist><label>Date</label><input type="date" id="pdt" value="'+today()+'"><label>Items (one per line: name, qty, unit, price)</label><textarea id="pt" rows="6" style="width:100%" placeholder="PP scrap, 500, kg, 40"></textarea><label>VAT % (0 = none)</label><input type="number" id="pv" value="0"><button class="btn full" data-a="popr">Create purchase order</button></div>';
+var tot=0,rows=p.txt.split('\n').filter(function(l){return l.trim()}).map(function(l,i){var f=l.split(',').map(function(x){return x.trim()}),t=num(f[1])*num(f[3]);tot+=t;return '<tr><td>'+(i+1)+'</td><td>'+esc(f[0])+'</td><td class="r">'+esc(f[1])+' '+esc(f[2]||'')+'</td><td class="r">'+money(num(f[3]))+'</td><td class="r">'+money(t)+'</td></tr>'}).join(''),vt=tot*p.vat/100;
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>PURCHASE ORDER</div><div class="rm"><span>PO date: '+esc(dmy(p.d))+'</span></div><div><b>Supplier:</b> '+esc(p.sup)+'</div><table><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr>'+rows+'</table><div class="rt"><div><span>Subtotal</span><span>'+money(tot)+'</span></div><div><span>VAT</span><span>'+money(vt)+'</span></div><div class="gt"><span>Total</span><span>'+money(tot+vt)+'</span></div></div><p style="font-size:12px">Authorised signature: ____________</p></div><div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="poedit">Edit</button></div>'}
+function vBi(){var c=C(),m=today().slice(0,7),pv=new Date(+m.slice(0,4),+m.slice(5,7)-2,1),pm=pv.getFullYear()+'-'+('0'+(pv.getMonth()+1)).slice(-2),ex={},inc={},top={};
+c.led.forEach(function(r){var k=r.d.slice(0,7);ex[k]=(ex[k]||0)+num(r.exp);inc[k]=(inc[k]||0)+num(r.inc)});
+c.sal.forEach(function(s){s.lines.forEach(function(l){top[l.name]=(top[l.name]||0)+l.qty*l.price})});
+var ch=function(a,b){return b?((a-b)/b*100).toFixed(1)+'%':'-'},tp=Object.keys(top).sort(function(a,b){return top[b]-top[a]}).slice(0,5);
+return '<h2>Business insights</h2><div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Expense this month</small><b class="neg">'+money(ex[m]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(ex[m]||0,ex[pm])+'</b></div><div class="tile"><small>Income this month</small><b class="pos">'+money(inc[m]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(inc[m]||0,inc[pm])+'</b></div></div><h3>Top selling products (by sales value)</h3>'+(tp.length?tp.map(function(k){return '<div class="item"><b>'+esc(k)+'</b><b>'+money(top[k])+'</b></div>'}).join(''):'<p class="note">No sales yet.</p>')+'<h3>Last 6 months</h3><div class="sheet"><table><tr><th>Month</th><th>Income</th><th>Expense</th><th>Net</th></tr>'+Object.keys(ex).concat(Object.keys(inc)).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse().slice(0,6).map(function(k){return '<tr><td>'+k+'</td><td class="r">'+money(inc[k]||0)+'</td><td class="r">'+money(ex[k]||0)+'</td><td class="r"><b>'+money((inc[k]||0)-(ex[k]||0))+'</b></td></tr>'}).join('')+'</table></div><p class="note">Profit per product needs a cost price on each item, which is not stored yet.</p>'}
+
+function slipTab(c){var h='<h3>Pay salary and make slip</h3><div class="card"><select id="sw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2" style="margin-top:8px"><div><label>Month</label><input type="month" id="sm" value="'+today().slice(0,7)+'"></div><div><label>Payment date</label><input type="date" id="sdt" value="'+today()+'"></div></div><button class="btn full" data-a="paysal">Pay salary and make slip</button><p class="note">Pending advances are deducted automatically. The slip shows every advance date by date.</p></div><h3>All slips</h3>',L=c.adv.filter(function(x){return x.k!=='bonus'&&x.k!=='ot'}).sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0});
+if(!L.length)return h+'<p class="note">No slips yet. An advance slip is made when you save an advance or loan.</p>';
+return h+L.map(function(x){var w=c.wrk.filter(function(y){return y.id===x.wid})[0];return '<div class="item" data-a="opsp" data-id="'+x.id+'"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+(x.k==='paid'?'Salary slip · '+esc(x.m):(x.k==='loan'?'Loan slip':'Advance slip'))+' · '+esc(dmy(x.d))+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join('')}
+function paidOf(c,id){return c.adv.reduce(function(t,a){return t+(a.wid===id&&a.k==='paid'?num(a.net):0)},0)}
+function vSps(){var c=C(),r=c.adv.filter(function(x){return x.id===S.sp})[0];if(!r)return '<p class="note">Slip not found.</p>';var w=c.wrk.filter(function(x){return x.id===r.wid})[0]||{name:'(removed)'},wn='<div><b>'+esc(w.name)+'</b>'+(w.role?' · '+esc(w.role):'')+'</div>',out=c.adv.filter(function(a){return a.wid===r.wid&&a.k!=='bonus'&&a.k!=='ot'&&a.k!=='paid'&&!a.s}).reduce(function(t,a){return t+num(a.amt)},0),
+act='<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="back">Back</button><button class="btn alt" data-a="delsp">Delete slip</button></div>';
+if(r.k!=='paid')return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>'+(r.k==='loan'?'LOAN':'ADVANCE')+' SLIP</div><div class="rm"><span>Date: '+esc(dmy(r.d))+'</span></div>'+wn+'<table><tr><td>Amount given</td><td class="r"><b>'+money(num(r.amt))+'</b></td></tr><tr><td>Total advance and loan taken so far</td><td class="r">'+money(advOf(c,r.wid))+'</td></tr><tr><td>To be deducted from salary</td><td class="r">'+money(out)+'</td></tr></table>'+(r.note?'<p style="font-size:12px">Note: '+esc(r.note)+'</p>':'')+'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act;
+var L=c.adv.filter(function(a){return a.wid===r.wid&&a.k!=='bonus'&&a.k!=='ot'&&a.k!=='paid'}).sort(function(a,b){return a.d<b.d?-1:1}),rows=L.map(function(a){var st=r.ids.indexOf(a.id)>-1?'Deducted now':(a.s?'Deducted earlier':'Pending');return '<tr><td>'+esc(dmy(a.d))+'</td><td>'+esc(a.note||(a.k==='loan'?'Loan':'Advance'))+'</td><td class="r">'+money(num(a.amt))+'</td><td>'+st+'</td></tr>'}).join('');
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>SALARY SLIP, '+esc(r.m)+'</div><div class="rm"><span>Paid on: '+esc(dmy(r.d))+'</span></div>'+wn+'<table><tr><td>Days present / half day</td><td class="r">'+r.pd+' / '+r.hd+'</td></tr><tr><td>Monthly salary</td><td class="r">'+money(num(w.wage))+'</td></tr><tr><td>Salary for days worked</td><td class="r">'+money(r.base)+'</td></tr><tr><td>Overtime</td><td class="r">'+money(r.ot)+'</td></tr><tr><td>Bonus</td><td class="r">'+money(r.bonus)+'</td></tr><tr><td><b>Total salary</b></td><td class="r"><b>'+money(r.base+r.ot+r.bonus)+'</b></td></tr><tr><td>Advance deducted</td><td class="r">−'+money(r.ded)+'</td></tr></table><div class="rt"><div class="gt"><span>Net received</span><span>'+money(r.net)+'</span></div></div><h3 style="font-size:13px;margin:12px 0 4px">Advance history, date by date</h3>'+(rows?'<table><tr><th>Date</th><th>Note</th><th class="r">Amount</th><th>Status</th></tr>'+rows+'</table>':'<p style="font-size:12px">No advances.</p>')+'<p style="font-size:12px">Advance still pending after this payment: '+money(out)+'</p><p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act}
 
 lockShow();
 if(CLOUDMODE){startCloud()}else{render()}
