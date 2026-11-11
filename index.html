@@ -245,32 +245,21 @@ return '<h2>'+esc(C().name)+'</h2>'+b('acc','Accounts','Daily income &amp; expen
 function tabs(arr,cur,act){return '<div class="tabs">'+arr.map(function(a){var p=a.split(':');return '<button class="tab'+(cur===p[0]?' on':'')+'" data-a="'+act+'" data-t="'+p[0]+'">'+p[1]+'</button>'}).join('')+'</div>'}
 
 /* accounts */
-function vAcc(){return '<h2>Accounts</h2>'+tabs(['inc:Daily income &amp; expense','debt:Factory debt'],S.atab,'atab')+(S.atab==='inc'?ledHtml():debtHtml())}
-function ledHtml(){return '<input id="lq" placeholder="Search notes, amounts or dates (any part of a word)..." value="'+esc(S.lq)+'" autocomplete="off" style="margin-bottom:10px"><div id="lr">'+ledBody()+'</div>'}
-function ledSearch(){
-var c=C(),terms=S.lq.trim().toLowerCase().split(/\s+/);
-var rows=c.led.map(function(r,i){return{r:r,i:i}}).filter(function(x){var r=x.r,txt=((r.note||'')+' '+r.d+' '+dmy(r.d)+' '+(r.inc===''?'':r.inc)+' '+(r.exp===''?'':r.exp)).toLowerCase();return terms.every(function(t){return txt.indexOf(t)>-1})}).sort(function(a,b){return a.r.d<b.r.d?1:a.r.d>b.r.d?-1:b.i-a.i});
-var ti=0,te=0,body='';
-rows.forEach(function(x){var r=x.r;ti+=num(r.inc);te+=num(r.exp);
-body+='<tr><td><input type="date" value="'+esc(r.d)+'" data-f="d" data-k="led" data-id="'+r.id+'"></td><td><input value="'+esc(r.note)+'" placeholder="Where from / spent on" data-f="note" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.inc)+'" data-f="inc" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.exp)+'" data-f="exp" data-k="led" data-id="'+r.id+'"></td><td><button class="x" data-a="del" data-k="led" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='led'+r.id?'?':'×')+'</button></td></tr>'});
-return '<div class="tiles"><div class="tile"><small>Found</small><b>'+rows.length+' rows</b></div><div class="tile"><small>Income</small><b class="pos">'+money(ti)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(te)+'</b></div></div><div class="sheet"><table style="min-width:560px"><tr><th style="width:140px">Date</th><th>Note</th><th style="width:110px">Income ৳</th><th style="width:110px">Expense ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="5" class="r" style="text-align:left">Nothing found.</td></tr>')+'</table></div><p class="note">Showing matches from all months. Clear the search box to go back to the date-wise sheet.</p>'}
-function ledBody(){
-if(S.lq.trim())return ledSearch();
-var c=C(),f=S.ld,m=f?f.slice(0,7):S.month,start=f||(m+'-01'),open=0;
-c.led.forEach(function(r){if(r.d<start)open+=num(r.inc)-num(r.exp)});
-var rows=c.led.map(function(r,i){return{r:r,i:i}}).filter(function(x){return f?x.r.d===f:x.r.d.slice(0,7)===m}).sort(function(a,b){return a.r.d<b.r.d?-1:a.r.d>b.r.d?1:a.i-b.i});
-var run=open,ti=0,te=0,days={},body='';
-rows.forEach(function(x){var r=x.r;ti+=num(r.inc);te+=num(r.exp);run+=num(r.inc)-num(r.exp);x.bal=run;var g=days[r.d]||(days[r.d]={i:0,e:0,bal:0,rows:[]});g.i+=num(r.inc);g.e+=num(r.exp);g.bal=run;g.rows.push(x)});
-Object.keys(days).sort().reverse().forEach(function(d){var g=days[d];
-body+='<tr class="tot"><td colspan="2">'+dmy(d)+' · day total</td><td class="r pos">'+money(g.i)+'</td><td class="r neg">'+money(g.e)+'</td><td class="r">'+money(g.bal)+'</td><td></td></tr>';
-g.rows.slice().reverse().forEach(function(x){var r=x.r;
-body+='<tr><td><input type="date" value="'+esc(r.d)+'" data-f="d" data-k="led" data-id="'+r.id+'"></td><td><input value="'+esc(r.note)+'" placeholder="Where from / spent on" data-f="note" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.inc)+'" data-f="inc" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r.exp)+'" data-f="exp" data-k="led" data-id="'+r.id+'"></td><td class="r '+(x.bal<0?'neg':'')+'">'+money(x.bal)+'</td><td><button class="x" data-a="del" data-k="led" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='led'+r.id?'?':'×')+'</button></td></tr>'})});
+function accSum(){var c=C(),f=S.ld,m=f?f.slice(0,7):S.month,start=f||(m+'-01'),open=0,ti=0,te=0;c.led.forEach(function(r){if(r.d<start)open+=num(r.inc)-num(r.exp);else if(f?r.d===f:r.d.slice(0,7)===m){ti+=num(r.inc);te+=num(r.exp)}});return{ti:ti,te:te,open:open,m:m,f:f}}
+function vAcc(){var q=accSum();return '<h2>Accounts</h2><div class="tiles"><div class="tile"><small>Income</small><b class="pos">'+money(q.ti)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(q.te)+'</b></div><div class="tile"><small>Balance</small><b>'+money(q.open+q.ti-q.te)+'</b></div></div><p class="note" style="margin:-4px 0 8px">Totals for '+(q.f?dmy(q.f):q.m)+'</p>'+tabs(['inc:Income','exp:Expense','debt:Debt'],S.atab,'atab')+(S.atab==='debt'?debtHtml():ledHtml())}
+function ledHtml(){return '<input id="lq" placeholder="Search notes, amounts or dates..." value="'+esc(S.lq)+'" autocomplete="off" style="margin-bottom:10px"><div id="lr">'+ledBody()+'</div>'}
+function ledRows(mode){return C().led.map(function(r,i){return{r:r,i:i}}).filter(function(x){var v=x.r[mode],e=function(y){return y===''||y==null};return !e(v)||(e(x.r.inc)&&e(x.r.exp)&&x.r.t===mode)})}
+function ledRow(r,mode){return '<tr><td><input type="date" value="'+esc(r.d)+'" data-f="d" data-k="led" data-id="'+r.id+'"></td><td><input value="'+esc(r.note)+'" placeholder="'+(mode==='inc'?'Where from':'Spent on')+'" data-f="note" data-k="led" data-id="'+r.id+'"></td><td><input type="number" inputmode="decimal" value="'+esc(r[mode])+'" data-f="'+mode+'" data-k="led" data-id="'+r.id+'"></td><td><button class="x" data-a="del" data-k="led" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='led'+r.id?'?':'×')+'</button></td></tr>'}
+function ledHead(mode){return '<tr><th style="width:140px">Date</th><th>Note</th><th style="width:120px">'+(mode==='inc'?'Income':'Expense')+' ৳</th><th style="width:40px"></th></tr>'}
+function ledBody(){var mode=S.atab==='exp'?'exp':'inc',cls=mode==='inc'?'pos':'neg',lbl=mode==='inc'?'income':'expense';
+if(S.lq.trim()){var terms=S.lq.trim().toLowerCase().split(/\s+/),t0=0,rs=ledRows(mode).filter(function(x){var r=x.r,txt=((r.note||'')+' '+r.d+' '+dmy(r.d)+' '+(r[mode]===''?'':r[mode])).toLowerCase();return terms.every(function(t){return txt.indexOf(t)>-1})}).sort(function(a,b){return a.r.d<b.r.d?1:a.r.d>b.r.d?-1:b.i-a.i});
+rs.forEach(function(x){t0+=num(x.r[mode])});
+return '<div class="tiles"><div class="tile"><small>Found</small><b>'+rs.length+' rows</b></div><div class="tile"><small>Total '+lbl+'</small><b class="'+cls+'">'+money(t0)+'</b></div></div><div class="sheet"><table style="min-width:420px">'+ledHead(mode)+(rs.map(function(x){return ledRow(x.r,mode)}).join('')||'<tr><td colspan="4" class="r" style="text-align:left">Nothing found.</td></tr>')+'</table></div><p class="note">Showing matches from all months. Clear the search box to go back to the date-wise sheet.</p>'}
+var f=S.ld,m=f?f.slice(0,7):S.month,days={},tt=0,rows=ledRows(mode).filter(function(x){return f?x.r.d===f:x.r.d.slice(0,7)===m}).sort(function(a,b){return a.r.d<b.r.d?-1:a.r.d>b.r.d?1:a.i-b.i});
+rows.forEach(function(x){var g=days[x.r.d]||(days[x.r.d]={t:0,rows:[]});g.t+=num(x.r[mode]);tt+=num(x.r[mode]);g.rows.push(x)});
+var body='';Object.keys(days).sort().reverse().forEach(function(d){var g=days[d];body+='<tr class="tot"><td colspan="2">'+dmy(d)+' · day total</td><td class="r '+cls+'">'+money(g.t)+'</td><td></td></tr>';g.rows.slice().reverse().forEach(function(x){body+=ledRow(x.r,mode)})});
 return '<div class="g2"><div><label>Month</label><input type="month" id="mo" value="'+m+'"></div><div><label>Show one date only</label><input type="date" id="ldf" value="'+esc(f)+'"></div></div>'+(f?'<button class="btn alt sm" data-a="ldclr" style="margin-top:6px">Show whole month</button>':'')
-+'<div class="tiles"><div class="tile"><small>Income</small><b class="pos">'+money(ti)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(te)+'</b></div><div class="tile"><small>Balance</small><b>'+money(open+ti-te)+'</b></div></div>'
-+'<button class="btn full" data-a="addrow" style="margin:0 0 10px">+ Add row</button>'
-+'<div class="sheet"><table><tr><th style="width:140px">Date</th><th>Note (from / to)</th><th style="width:110px">Income ৳</th><th style="width:110px">Expense ৳</th><th style="width:120px">Balance</th><th style="width:40px"></th></tr>'
-+'<tr class="tot"><td colspan="2">Total '+(f?dmy(f):m)+'</td><td class="r">'+money(ti)+'</td><td class="r">'+money(te)+'</td><td class="r">'+money(open+ti-te)+'</td><td></td></tr>'+body
-+'<tr class="tot"><td colspan="4">Opening balance (before '+(f?dmy(f):dmy(start))+')</td><td class="r">'+money(open)+'</td><td></td></tr></table></div><p class="note">Entries are grouped by date, newest date first. A new row appears at the top. Tap a cell to edit. Tap × twice to delete a row.</p>'}
++'<button class="btn full" data-a="addrow" style="margin:10px 0">+ Add '+lbl+'</button><div class="sheet"><table style="min-width:420px">'+ledHead(mode)+'<tr class="tot"><td colspan="2">Total '+lbl+' · '+(f?dmy(f):m)+'</td><td class="r '+cls+'">'+money(tt)+'</td><td></td></tr>'+(body||'<tr><td colspan="4" class="r" style="text-align:left">No '+lbl+' entries yet.</td></tr>')+'</table></div><p class="note">Entries are grouped by date, newest date first. A new row appears at the top. Tap a cell to edit. Tap × twice to delete a row.</p>'}
 
 function debtHtml(){return '<input id="dq" placeholder="Search supplier or material..." value="'+esc(S.dq)+'"><button class="btn full" data-a="adddebt" style="margin:10px 0">+ Add row</button><div id="dt">'+debtTable(C())+'</div>'}
 function debtTable(c){
@@ -622,7 +611,7 @@ document.addEventListener('change',function(e){
 var t=e.target;
 if(t.dataset&&t.dataset.f){var c=S.cid?C():null,it=find(t.dataset.k,t.dataset.id);if(!it)return;
 var f=t.dataset.f,v=t.value,k=t.dataset.k;
-if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid')v=v===''?'':parseFloat(v);
+if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid')v=v===''?'':parseFloat(bn2en(v));
 if(f==='d'&&!v)v=today();
 if(k==='stk'&&f==='qty'){var nq=num(v),dl=nq-num(it.qty);if(dl)mvAdj(c,it,dl,'set','',S.sd);save();render();return}
 it[f]=v;save();render()}
@@ -700,7 +689,7 @@ window.open('https://wa.me/'+dgw+'?text='+encodeURIComponent(msg),'_blank')
 else if(a==='del'){var k=b.dataset.k,key=k+id;
 if(S.arm!==key){S.arm=key;render();return}
 S.arm='';c[k]=c[k].filter(function(x){return x.id!==id});save();render()}
-else if(a==='addrow'){S.lq='';var m=S.month,nr2={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',inc:'',exp:''};c.led.push(nr2);FOC='input[data-f=note][data-id="'+nr2.id+'"]';save();render()}
+else if(a==='addrow'){S.lq='';var m=S.month,nr2={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',inc:'',exp:'',t:(S.atab==='exp'?'exp':'inc')};c.led.push(nr2);FOC='input[data-f=note][data-id="'+nr2.id+'"]';save();render()}
 else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
 else if(a==='addstk'){var n2=$('sn').value.trim();if(!n2){toast('Enter the item name');return}
 var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd);save();render()}
