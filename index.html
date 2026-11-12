@@ -165,7 +165,7 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function supKey(n){return String(n==null?'':n).normalize('NFC').replace(/[\u200B-\u200D\uFEFF\u00A0\s]+/g,'').toLowerCase()}
 function supClean(n){return String(n==null?'':n).normalize('NFC').replace(/[\u200B\uFEFF]/g,'').replace(/\s+/g,' ').trim()}
 function dTot(r){var q=num(r.qty),u=num(r.rate);return(q&&u)?Math.round(q*u*100)/100:num(r.price)}
-function fix(c){c.led=c.led||[];c.debt=c.debt||[];c.debt.forEach(function(r){if((r.rate===undefined||r.rate==='')&&num(r.qty)>0&&num(r.price)>0)r.rate=num(r.price)/num(r.qty);if(r.rate===undefined)r.rate=''});c.stk=c.stk||[];c.sal=c.sal||[];c.mov=c.mov||[];c.wrk=c.wrk||[];c.att=c.att||{};c.adv=c.adv||[];c.invNo=c.invNo||1;c.rcpt=c.rcpt||[];return c}
+function fix(c){c.led=c.led||[];c.debt=c.debt||[];c.debt.forEach(function(r){if((r.rate===undefined||r.rate==='')&&num(r.qty)>0&&num(r.price)>0)r.rate=num(r.price)/num(r.qty);if(r.rate===undefined)r.rate=''});c.stk=c.stk||[];c.sal=c.sal||[];c.mov=c.mov||[];c.wrk=c.wrk||[];c.att=c.att||{};c.adv=c.adv||[];c.invNo=c.invNo||1;c.rcpt=c.rcpt||[];c.due=c.due||[];return c}
 function blank(n){return fix({id:uid(),name:n,ts:Date.now()})}
 function load(){try{var v=localStorage.getItem('fm_data');return v?JSON.parse(v):null}catch(e){return null}}
 var CFG=window.FM_CONFIG||(typeof firebaseConfig!=='undefined'?firebaseConfig:null);
@@ -284,14 +284,16 @@ function vAcc(){var q=accSum();return '<h2>Accounts</h2><div class="tiles"><div 
 function duesList(c){var L=[];
 (c.sal||[]).forEach(function(x){var d=saleTotal(x)-num(x.paid);if(d>0.004)L.push({k:'s',id:x.id,who:x.cust||'Walk-in customer',ref:x.no,d:x.d,due:d,phone:x.phone||''})});
 (c.rcpt||[]).forEach(function(r){var d=rcptTotal(r)-num(r.paid);if(d>0.004)L.push({k:'r',id:r.id,who:r.cust||'Customer',ref:'Receipt '+(r.no||''),d:r.d,due:d,phone:r.phone||''})});
+(c.due||[]).forEach(function(x){var d=num(x.amt)-num(x.paid);if(d>0.004)L.push({k:'m',id:x.id,who:x.who||'Customer',ref:x.note||'Manual due',d:x.d,due:d,phone:x.phone||''})});
 L.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0});return L}
 function duesBar(){var L=duesList(C()),t=L.reduce(function(a,x){return a+x.due},0);
-return '<button class="big" data-a="atab" data-t="due" style="padding:12px 16px;margin:0 0 10px;border-left-color:var(--green);font-size:1.15rem"><b class="pos" style="float:right">'+money(t)+'</b>Dues to receive<small>'+(L.length?L.length+' unpaid invoice'+(L.length===1?'':'s')+' or receipt'+(L.length===1?'':'s'):'Nothing unpaid')+'</small></button>'}
+return '<button class="big" data-a="atab" data-t="due" style="padding:12px 16px;margin:0 0 10px;border-left-color:var(--green);font-size:1.15rem"><b class="pos" style="float:right">'+money(t)+'</b>Dues to receive<small>'+(L.length?L.length+' unpaid due'+(L.length===1?'':'s'):'Nothing unpaid')+'</small></button>'}
 function duesHtml(){var L=duesList(C());
-if(!L.length)return '<p class="note">No dues. Unpaid balances from invoices and money receipts show here.</p>';
-var t0=today(),h='<p class="note">Oldest first. Tap Received when the customer pays.</p>';
+var form='<div class="card"><b>Add a due (money you will receive)</b><label class="note">Customer or party name</label><input id="dn" autocomplete="off"><div class="g2"><div><label>Amount ৳</label><input type="number" inputmode="decimal" id="dam"></div><div><label>Date</label><input type="date" id="ddt" value="'+today()+'"></div></div><label class="note">Phone (optional)</label><input id="dph" inputmode="tel"><label class="note">Note (optional)</label><input id="dno"><button class="btn full" data-a="adddue">Save due</button></div>';
+if(!L.length)return form+'<p class="note">No dues yet. Dues you add here, and unpaid balances from invoices and money receipts, show in this list.</p>';
+var t0=today(),h=form+'<p class="note">Oldest first. Tap Received when the customer pays.</p>';
 L.forEach(function(x){var days=Math.max(0,Math.floor((new Date(t0)-new Date(x.d))/86400000));
-h+='<div class="item"><div><b>'+esc(x.who)+'</b><br><small>'+esc(x.ref)+' · '+esc(dmy(x.d))+' · '+days+' day'+(days===1?'':'s')+(x.phone?' · '+esc(x.phone):'')+'</small></div><div style="text-align:right"><b class="neg">'+money(x.due)+'</b><br><button class="btn sm" data-a="recvdue" data-k="'+x.k+'" data-id="'+x.id+'">Received</button></div></div>'});
+h+='<div class="item"><div><b>'+esc(x.who)+'</b><br><small>'+esc(x.ref)+' · '+esc(dmy(x.d))+' · '+days+' day'+(days===1?'':'s')+(x.phone?' · '+esc(x.phone):'')+'</small></div><div style="text-align:right"><b class="neg">'+money(x.due)+'</b><br><button class="btn sm" data-a="recvdue" data-k="'+x.k+'" data-id="'+x.id+'">Received</button>'+(x.k==='m'?' <button class="btn alt sm" data-a="deldue" data-id="'+x.id+'">Delete</button>':'')+'</div></div>'});
 return h}
 function ledHtml(){return '<input id="lq" placeholder="Search notes, amounts or dates..." value="'+esc(S.lq)+'" autocomplete="off" style="margin-bottom:10px"><div id="lr">'+ledBody()+'</div>'}
 function ledRows(mode){return C().led.map(function(r,i){return{r:r,i:i}}).filter(function(x){var v=x.r[mode],e=function(y){return y===''||y==null};return !e(v)||(e(x.r.inc)&&e(x.r.exp)&&x.r.t===mode)})}
@@ -725,8 +727,10 @@ else if(a==='dlgdel'){if(D.companies.length<2){toast('Keep at least one company'
 else if(a==='dlgren'){var cc=D.companies.filter(function(x){return x.id===S.dlg})[0],nn=prompt('New company name',cc.name);S.dlg='';if(nn&&nn.trim()){cc.name=nn.trim();save()}render()}
 else if(a==='go'){S.v=b.dataset.v;S.arm='';if(b.dataset.v==='rcpt'){S.rtab='list';S.rid=''}render();window.scrollTo(0,0)}
 else if(a==='ldclr'){S.ld='';render()}
-else if(a==='recvdue'){var rk=b.dataset.k,rec=(rk==='r'?c.rcpt:c.sal).filter(function(x){return x.id===id})[0];if(!rec)return;
-var tt=rk==='r'?rcptTotal(rec):saleTotal(rec),dd=Math.round((tt-num(rec.paid))*100)/100,ans=prompt('Amount received now (৳). Due: '+money(dd),String(dd));if(ans===null)return;
+else if(a==='adddue'){var dn=($('dn').value||'').trim(),dam=num($('dam').value);if(!dn){toast('Enter the customer name');return}if(dam<=0){toast('Enter the amount');return}c.due=c.due||[];c.due.push({id:uid(),d:$('ddt').value||today(),who:dn,phone:($('dph').value||'').trim(),note:($('dno').value||'').trim(),amt:dam,paid:0});save();render();toast('Due saved')}
+else if(a==='deldue'){if(!confirm('Delete this due?'))return;c.due=(c.due||[]).filter(function(x){return x.id!==id});save();render()}
+else if(a==='recvdue'){var rk=b.dataset.k,rec=(rk==='r'?c.rcpt:rk==='m'?c.due:c.sal).filter(function(x){return x.id===id})[0];if(!rec)return;
+var tt=rk==='r'?rcptTotal(rec):rk==='m'?num(rec.amt):saleTotal(rec),dd=Math.round((tt-num(rec.paid))*100)/100,ans=prompt('Amount received now (৳). Due: '+money(dd),String(dd));if(ans===null)return;
 var am2=Math.round(num(ans)*100)/100;if(am2<=0){toast('Enter an amount');return}if(am2>dd){toast('More than the due: '+money(dd));return}
 rec.paid=Math.round((num(rec.paid)+am2)*100)/100;save();render();toast('Received '+money(am2))}
 else if(a==='atab'){S.atab=b.dataset.t;S.arm='';render()}
@@ -845,7 +849,7 @@ else if(a==='rst'){if(CLOUDMODE&&CL.role!=='owner'){toast('Only the owner can re
 var CL={ready:false,user:null,wid:'',role:'',wname:'',email:'',db:null,auth:null,unsubs:[],cos:{},pend:{},coDone:false,synced:{},ord:{},lastBackup:0,signing:false};
 var FS=null,FA=null,RO=false,flBusy=false,flAgain=false,flT=0,GV={e:''};
 /* CHANGED: added 'rcpt' */
-var COLLS=['led','debt','stk','sal','mov','wrk','adv','rcpt'];
+var COLLS=['led','debt','stk','sal','mov','wrk','adv','rcpt','due'];
 /* CHANGED: added rcpt label */
 var LBL={led:'income/expense row',debt:'factory debt row',stk:'stock item',sal:'invoice',mov:'stock entry',wrk:'worker',adv:'advance',att:'attendance day',co:'company',rcpt:'receipt'};
 /* CHANGED: added receipt view/print actions (viewers can view/print but not edit) */
@@ -922,6 +926,7 @@ if(coll==='mov')return (d.type||'')+' '+(d.name||'')+' '+(d.delta||'');
 if(coll==='wrk')return d.name||'';
 if(coll==='adv')return 'advance '+(d.amt||'');
 if(coll==='rcpt')return (d.no||'')+' '+(d.cust||'');
+if(coll==='due')return 'due '+(d.who||'')+' '+(d.amt||'');
 if(coll==='att')return d.m?Object.keys(d.m).length+' marks':'';}
 catch(e){}
 return ''}
