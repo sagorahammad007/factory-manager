@@ -10,4 +10,4 @@ const firebaseConfig = {
 
 // Your phone number. Shown to customers on the "Waiting for approval" and "Subscription ended" screens.
 // Example: const SUPPORT_PHONE = "01XXXXXXXXX";
-const SUPPORT_PHONE = "";
+const SUPPORT_PHONE = "+8801888713886";
