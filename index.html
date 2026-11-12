@@ -560,7 +560,7 @@ h+='<button class="btn full" style="margin:0 0 12px" data-a="addw">+ Add worker<
 if(!c.wrk.length)h+='<p class="note">No workers yet.</p>';
 c.wrk.forEach(function(w){
 function f(k,l,t,ph){return '<div class="f"><label>'+l+'</label><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+'value="'+esc(w[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="wrk" data-id="'+w.id+'"></div>'}
-h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('joined','Joining date','date')+f('note','Address / note')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
+h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('phone2','Phone number 2','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('joined','Joining date','date')+f('note','Address / note')+f('extra','Additional information')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
 return h+'<p class="note">Salary is monthly. The daily amount is worked out from attendance: monthly salary ÷ days in that month, for each day present.</p>'}
 if(S.wtab==='att')return h+attHtml(c);
 if(S.wtab==='slip')return h+slipTab(c);
@@ -595,14 +595,14 @@ return h}
 
 function wsRes(c){
 var q=S.wsq.trim().toLowerCase();if(!q)return '';
-var a=c.wrk.filter(function(w){return ((w.name||'')+' '+(w.phone||'')+' '+(w.role||'')).toLowerCase().indexOf(q)>-1}).slice(0,8);
+var a=c.wrk.filter(function(w){return ((w.name||'')+' '+(w.phone||'')+' '+(w.phone2||'')+' '+(w.role||'')).toLowerCase().indexOf(q)>-1}).slice(0,8);
 return a.length?a.map(function(w){return '<button class="chip" data-a="wopen" data-id="'+w.id+'">'+esc(w.name||'(no name)')+'<small>'+esc(w.role||'')+'</small></button>'}).join(''):'<p class="note">No worker found.</p>'}
 function vWp(){
 var c=C(),w=c.wrk.filter(function(x){return x.id===S.wid})[0];
 if(!w)return '<p class="note">Worker not found.</p>';
 var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id),m=S.wm,ms={},days=[],n={P:0,A:0,L:0,H:0},NAME={P:'Present',A:'Absent',L:'Leave',H:'Half day'};
 Object.keys(c.att).sort().forEach(function(k){var s=c.att[k][w.id];if(!s)return;var mm=k.slice(0,7),o=ms[mm]||(ms[mm]={P:0,A:0,L:0,H:0});o[s]++;if(mm===m){n[s]++;days.push([k,s])}});
-var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div><div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+'</div>';
+var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div>'+(w.phone2?'<div><label>Phone 2</label>'+esc(w.phone2)+'</div>':'')+'<div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+(w.extra?'<p class="note"><b>More:</b> '+esc(w.extra)+'</p>':'')+'</div>';
 h+='<div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Days present (all time)</small><b>'+e.days+'</b></div><div class="tile"><small>Earned till today</small><b>'+money(e.earn)+'</b></div><div class="tile"><small>Advance taken</small><b class="neg">'+money(a)+'</b></div><div class="tile"><small>Due</small><b class="'+(e.earn-a<0?'neg':'pos')+'">'+money(e.earn-a)+'</b></div></div>';
 if(e.earn-a<0)h+='<p class="neg" style="margin:0 0 8px"><b>Extra advance '+money(a-e.earn)+'.</b> It is adjusted from his earnings day by day.</p>';
 var mk=Object.keys(ms).sort().reverse();
@@ -819,7 +819,7 @@ sv.lines.forEach(function(l){msg+='- '+l.name+': '+l.qty+' '+l.unit+' x '+l.pric
 msg+='Total: '+money(tt)+'\nReceived: '+money(sv.paid)+'\nDue: '+money(tt-sv.paid);
 var dg=String(sv.phone).replace(/\D/g,'');if(dg.charAt(0)==='0')dg='880'+dg.slice(1);
 window.open('https://wa.me/'+dg+'?text='+encodeURIComponent(msg),'_blank')}
-else if(a==='addw'){var nw={id:uid(),name:'',phone:'',role:'',wage:'',joined:today(),note:''};c.wrk.unshift(nw);FOC='input[data-f=name][data-id="'+nw.id+'"]';save();render()}
+else if(a==='addw'){var nw={id:uid(),name:'',phone:'',phone2:'',role:'',wage:'',joined:today(),note:'',extra:''};c.wrk.unshift(nw);FOC='input[data-f=name][data-id="'+nw.id+'"]';save();render()}
 else if(a==='att'){var dy=c.att[S.date]||(c.att[S.date]={}),w=b.dataset.w,s2=b.dataset.s;if(dy[w]===s2)delete dy[w];else dy[w]=s2;save();render()}
 else if(a==='allp'){var d2=c.att[S.date]||(c.att[S.date]={});c.wrk.forEach(function(x){d2[x.id]='P'});save();render()}
 else if(a==='mvup'||a==='mvdn'){var ix=c.wrk.map(function(x){return x.id}).indexOf(id),j=a==='mvup'?ix-1:ix+1;
