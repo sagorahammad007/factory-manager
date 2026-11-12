@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && request.auth.token.email == 'sagorahammad007@gmail.com'; }
+
+    function memberPath(wid) { return /databases/$(database)/documents/workspaces/$(wid)/members/$(request.auth.uid); }
+    function isMember(wid) { return signedIn() && exists(memberPath(wid)); }
+    function myRole(wid) { return get(memberPath(wid)).data.role; }
+    function isOwner(wid) { return isMember(wid) && myRole(wid) == 'owner'; }
+
+    function subPath(wid) { return /databases/$(database)/documents/subscriptions/$(wid); }
+    function subActive(wid) {
+      return exists(subPath(wid))
+        && get(subPath(wid)).data.status == 'active'
+        && get(subPath(wid)).data.expiresAt > request.time.toMillis();
+    }
+
+    function canRead(wid) { return isAdmin() || (isMember(wid) && subActive(wid)); }
+    function canWrite(wid) { return isAdmin() || (isMember(wid) && myRole(wid) in ['owner', 'manager'] && subActive(wid)); }
+
+    function inviteOk(wid) {
+      return get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.wid == wid
+        && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.used == false
+        && get(/databases/$(database)/documents/invites/$(request.resource.data.code)).data.role == request.resource.data.role
+        && request.resource.data.role in ['manager', 'viewer'];
+    }
+
+    // Pointer from a person to their workspace
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if signedIn() && request.auth.uid == uid;
+    }
+
+    // Subscription status: only the admin can approve, renew or block
+    match /subscriptions/{wid} {
+      allow read: if isAdmin() || isMember(wid);
+      allow create: if isAdmin() || (signedIn()
+        && get(/databases/$(database)/documents/workspaces/$(wid)).data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.expiresAt == 0);
+      allow update, delete: if isAdmin();
+      match /payments/{pid} {
+        allow read, write: if isAdmin();
+      }
+    }
+
+    // Invite codes
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && isOwner(request.resource.data.wid)
+        && subActive(request.resource.data.wid)
+        && request.resource.data.used == false
+        && request.resource.data.role in ['manager', 'viewer']
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.used == false
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy'])
+        && request.resource.data.used == true
+        && request.resource.data.usedBy == request.auth.uid;
+    }
+
+    match /workspaces/{wid} {
+      // members can always open their workspace so the app can show the lock screen
+      allow read: if isAdmin() || isMember(wid);
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isAdmin()
+        || (isOwner(wid) && subActive(wid))
+        || (canWrite(wid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastBackup']));
+
+      match /members/{mid} {
+        allow get: if signedIn() && (mid == request.auth.uid || isAdmin());
+        allow list: if canRead(wid);
+        allow create: if signedIn() && mid == request.auth.uid && (
+          (get(/databases/$(database)/documents/workspaces/$(wid)).data.ownerUid == request.auth.uid
+            && request.resource.data.role == 'owner')
+          || inviteOk(wid));
+        allow update: if isAdmin();
+        allow delete: if isAdmin() || (isOwner(wid) && subActive(wid) && mid != request.auth.uid);
+      }
+
+      match /audit/{aid} {
+        allow read: if isAdmin() || (isOwner(wid) && subActive(wid));
+        allow create: if canWrite(wid) && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if false;
+      }
+
+      // all business data: companies and everything inside them
+      match /companies/{path=**} {
+        allow read: if canRead(wid);
+        allow write: if canWrite(wid);
+      }
+    }
+  }
+}

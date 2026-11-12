@@ -7,3 +7,7 @@ const firebaseConfig = {
   appId: "1:153412827372:web:197eee5bc21db7a7fe8dc9",
   measurementId: "G-8LQJP78HV0"
 };
+
+// Your phone number. Shown to customers on the "Waiting for approval" and "Subscription ended" screens.
+// Example: const SUPPORT_PHONE = "01XXXXXXXXX";
+const SUPPORT_PHONE = "";

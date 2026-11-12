@@ -13,3 +13,5 @@
   Cache-Control: no-cache
 /
   Cache-Control: no-cache
+/admin.html
+  Cache-Control: no-cache

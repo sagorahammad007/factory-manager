@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -6,146 +6,161 @@
 <title>Admin Control Panel</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap">
 <style>
-:root{--bg:#0b0e11;--surface:#1a1e22;--ink:#f2f4f5;--accent:#f5b800;--red:#ff6b61;--green:#4cd185;--line:#2c3238}
+:root{--bg:#0b0e11;--surface:#1a1e22;--ink:#f2f4f5;--mute:#9aa4ad;--accent:#f5b800;--red:#ff6b61;--green:#4cd185;--line:#2c3238}
+*{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Barlow,Arial,sans-serif;line-height:1.45;padding:20px}
 h1,h2,h3{font-family:"Barlow Condensed",Arial,sans-serif;text-transform:uppercase;margin:0}
 .wrap{max-width:900px;margin:0 auto}
-header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--accent);padding-bottom:10px;margin-bottom:20px}
+header{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid var(--accent);padding-bottom:10px;margin-bottom:20px;gap:10px;flex-wrap:wrap}
 .card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--accent);padding:15px;margin-bottom:15px}
 .btn{background:var(--accent);color:#14171a;border:0;padding:8px 12px;font-weight:700;cursor:pointer;text-transform:uppercase;font-family:"Barlow Condensed";font-size:1rem}
-.btn.red{background:var(--red);color:#fff}
-.btn.green{background:var(--green);color:#14171a}
-.row{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding:10px 0}
-.row:last-child{border-bottom:0}
-.status{padding:4px 8px;font-size:.8rem;font-weight:700;text-transform:uppercase}
-.status.active{background:var(--green);color:#000}
-.status.suspended{background:var(--red);color:#fff}
-.status.pending{background:var(--accent);color:#000}
+.btn.red{background:var(--red);color:#fff}.btn.green{background:var(--green);color:#14171a}.btn.grey{background:#39414a;color:#fff}
+.status{padding:3px 8px;font-size:.8rem;font-weight:700;text-transform:uppercase}
+.status.active{background:var(--green);color:#000}.status.blocked,.status.expired{background:var(--red);color:#fff}.status.pending,.status.none{background:var(--accent);color:#000}
 #login{max-width:400px;margin:100px auto;text-align:center}
-input{width:100%;padding:10px;margin-bottom:10px;background:#000;color:#fff;border:1px solid var(--line);font-family:inherit}
+input,select{width:100%;padding:10px;margin-bottom:8px;background:#000;color:#fff;border:1px solid var(--line);font-family:inherit;font-size:1rem}
+label{display:block;font-size:.8rem;color:var(--mute);margin-bottom:2px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.sm{color:var(--mute);font-size:.85rem}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px}
+.stats .card{margin:0;padding:10px}.stats h2{font-size:1.8rem}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr}}
 </style>
 <script src="firebase-config.js"></script>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <h1>⚙️ Admin Control Panel</h1>
-    <div>
-      <button id="refreshBtn" class="btn" style="display:none; margin-right:10px; background:#39414a; color:#fff">Refresh</button>
-      <button id="logout" class="btn" style="display:none">Sign Out</button>
-    </div>
-  </header>
+<header>
+<h1>⚙️ Admin Control Panel</h1>
+<div><button id="refreshBtn" class="btn grey" style="display:none;margin-right:8px">Refresh</button><button id="logout" class="btn" style="display:none">Sign Out</button></div>
+</header>
 
-  <div id="login" class="card">
-    <h2>Owner Login</h2>
-    <input type="email" id="email" placeholder="Admin Email" value="sagorahammad007@gmail.com">
-    <input type="password" id="pass" placeholder="Password">
-    <button class="btn" style="width:100%" id="loginBtn">Sign In</button>
-    <p id="loginErr" style="color:var(--red); margin-top:10px;"></p>
-  </div>
+<div id="login" class="card">
+<h2>Owner Login</h2>
+<input type="email" id="email" placeholder="Admin Email" value="sagorahammad007@gmail.com">
+<input type="password" id="pass" placeholder="Password">
+<button class="btn" style="width:100%" id="loginBtn">Sign In</button>
+<p id="loginErr" style="color:var(--red);margin-top:10px"></p>
+</div>
 
-  <div id="dash" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px">
-      <div class="card"><h3>Total Clients</h3><h2 id="total">0</h2></div>
-      <div class="card"><h3>Pending Approval</h3><h2 id="pending" style="color:var(--accent)">0</h2></div>
-    </div>
-    
-    <div class="card">
-      <h3>Client Management</h3>
-      <div id="users"><p class="note">Loading...</p></div>
-    </div>
-  </div>
+<div id="dash" style="display:none">
+<div class="stats">
+<div class="card"><h3>Clients</h3><h2 id="sTotal">0</h2></div>
+<div class="card"><h3>Waiting</h3><h2 id="sPending" style="color:var(--accent)">0</h2></div>
+<div class="card"><h3>Active</h3><h2 id="sActive" style="color:var(--green)">0</h2></div>
+<div class="card"><h3>Ended / blocked</h3><h2 id="sEnded" style="color:var(--red)">0</h2></div>
+</div>
+<div class="card"><h3>Client management</h3><p class="sm">Waiting and ended clients are shown first. Approve after the customer has paid and you have confirmed by phone.</p><div id="users"><p class="sm">Loading...</p></div></div>
+</div>
 </div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-  import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, setDoc, addDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-  const config = typeof firebaseConfig !== 'undefined' ? firebaseConfig : window.firebaseConfig;
-  const app = initializeApp(config);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+const ADMIN = 'sagorahammad007@gmail.com';
+const config = typeof firebaseConfig !== 'undefined' ? firebaseConfig : window.firebaseConfig;
+const app = initializeApp(config);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
+const fmt = ms => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+let rows = {}, timer = null;
 
-  const loginBtn = document.getElementById('loginBtn');
-  const loginErr = document.getElementById('loginErr');
-  const userList = document.getElementById('users');
+$('loginBtn').addEventListener('click', () => {
+  $('loginErr').innerText = 'Signing in...';
+  signInWithEmailAndPassword(auth, $('email').value, $('pass').value).catch(e => { $('loginErr').innerText = e.message; });
+});
+$('logout').addEventListener('click', () => signOut(auth));
+$('refreshBtn').addEventListener('click', load);
 
-  loginBtn.addEventListener('click', () => {
-      loginErr.innerText = "Signing in...";
-      signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('pass').value)
-        .catch(e => { loginErr.innerText = e.message; });
-  });
+function state(r) {
+  const s = r.sub;
+  if (!s) return 'none';
+  if (s.status === 'active' && Number(s.expiresAt) <= Date.now()) return 'expired';
+  return s.status;
+}
+const LABEL = { none: 'No plan yet', pending: 'Waiting', active: 'Active', blocked: 'Blocked', expired: 'Expired' };
 
-  document.getElementById('logout').addEventListener('click', () => signOut(auth));
-  document.getElementById('refreshBtn').addEventListener('click', () => loadUsers());
-
-  window.approveUser = async (uid) => {
-    await updateDoc(doc(db, "users", uid), { status: "active" });
-    loadUsers();
-  };
-
-  window.suspendUser = async (uid) => {
-    if(confirm("Suspend this client? They will be locked out immediately.")) {
-      await updateDoc(doc(db, "users", uid), { status: "suspended" });
-      loadUsers();
-    }
-  };
-
-  async function loadUsers() {
-    userList.innerHTML = '<p style="color:var(--accent)">Loading data from Firebase...</p>';
-    try {
-      const querySnapshot = await getDocs(collection(db, "users"));
-      let html = '';
-      let pending = 0;
-      let total = 0;
-      
-      querySnapshot.forEach((docSnap) => {
-        const u = docSnap.data();
-        total++;
-        if (u.status === 'pending' || !u.status) pending++;
-        
-        let badge = `<span class="status ${u.status || 'pending'}">${u.status || 'pending'}</span>`;
-        let actionBtn = u.status === 'active' 
-          ? `<button class="btn red" onclick="suspendUser('${docSnap.id}')">Suspend</button>`
-          : `<button class="btn green" onclick="approveUser('${docSnap.id}')">Approve</button>`;
-
-        html += `
-          <div class="row">
-            <div>
-              <b>${u.email || 'No Email'}</b><br>
-              <small style="color:var(--line)">Role: ${u.role || 'owner'} | Workspace: ${u.wid || 'None'}</small>
-            </div>
-            <div style="display:flex;gap:10px;align-items:center">
-              ${badge} ${actionBtn}
-            </div>
-          </div>
-        `;
-      });
-
-      document.getElementById('total').innerText = total;
-      document.getElementById('pending').innerText = pending;
-      userList.innerHTML = html || '<p style="color:var(--red)">Firebase returned 0 users. Your Firestore database is empty.</p>';
-      
-    } catch (err) {
-      userList.innerHTML = `<p style="color:var(--red)">Error: ${err.message}<br>Check your Firebase Security Rules.</p>`;
-    }
+async function load() {
+  $('users').innerHTML = '<p class="sm">Loading...</p>';
+  try {
+    const [us, ss, ws] = await Promise.all([getDocs(collection(db, 'users')), getDocs(collection(db, 'subscriptions')), getDocs(collection(db, 'workspaces'))]);
+    rows = {};
+    ws.forEach(d => { rows[d.id] = { wid: d.id, name: d.data().name || '', email: '', sub: null }; });
+    us.forEach(d => { const u = d.data(); if (u.wid && u.role === 'owner') { rows[u.wid] = rows[u.wid] || { wid: u.wid, name: '', email: '', sub: null }; rows[u.wid].email = u.email || ''; } });
+    ss.forEach(d => { const s = d.data(); rows[d.id] = rows[d.id] || { wid: d.id, name: '', email: '', sub: null }; rows[d.id].sub = s; if (!rows[d.id].email) rows[d.id].email = s.email || ''; if (!rows[d.id].name) rows[d.id].name = s.name || ''; });
+    render();
+  } catch (err) {
+    $('users').innerHTML = `<p style="color:var(--red)">Error: ${esc(err.message)}<br>Check your Firebase Security Rules.</p>`;
   }
+}
 
-  onAuthStateChanged(auth, (user) => {
-    if (user && user.email === 'sagorahammad007@gmail.com') {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('dash').style.display = 'block';
-      document.getElementById('logout').style.display = 'block';
-      document.getElementById('refreshBtn').style.display = 'inline-block';
-      loadUsers();
+function render() {
+  const list = Object.values(rows);
+  const order = { pending: 0, none: 0, expired: 1, active: 2, blocked: 3 };
+  list.sort((a, b) => order[state(a)] - order[state(b)] || (a.name || '').localeCompare(b.name || ''));
+  let wait = 0, act = 0, end = 0;
+  list.forEach(r => { const s = state(r); if (s === 'pending' || s === 'none') wait++; else if (s === 'active') act++; else end++; });
+  $('sTotal').innerText = list.length; $('sPending').innerText = wait; $('sActive').innerText = act; $('sEnded').innerText = end;
+  document.title = (wait ? '(' + wait + ') ' : '') + 'Admin Control Panel';
+  if (!list.length) { $('users').innerHTML = '<p class="sm">No clients yet.</p>'; return; }
+  $('users').innerHTML = list.map(r => {
+    const s = state(r), sub = r.sub || {};
+    const info = [r.email, sub.expiresAt ? (s === 'expired' ? 'ended ' : 'until ') + fmt(Number(sub.expiresAt)) : '', sub.lastPay ? 'last: ৳' + esc(sub.lastPay.amount) + ' / ' + esc(sub.lastPay.txn || 'no ID') : '', sub.paidTotal ? 'total paid ৳' + sub.paidTotal : ''].filter(Boolean).map(esc).join(' · ');
+    let ctl = '';
+    if (s === 'blocked') {
+      ctl = `<div class="actions"><button class="btn green" data-un="${r.wid}">Unblock</button></div>`;
     } else {
-      document.getElementById('login').style.display = 'block';
-      document.getElementById('dash').style.display = 'none';
-      document.getElementById('logout').style.display = 'none';
-      document.getElementById('refreshBtn').style.display = 'none';
+      const label = s === 'active' ? 'Extend' : (s === 'expired' ? 'Renew' : 'Approve');
+      ctl = `<div class="grid3"><div><label>Plan</label><select data-m="${r.wid}"><option value="1">1 month</option><option value="3">3 months</option><option value="6">6 months</option><option value="12">12 months</option></select></div>
+<div><label>Amount paid (৳)</label><input data-a="${r.wid}" inputmode="numeric" placeholder="0"></div>
+<div><label>bKash / Nagad TrxID</label><input data-t="${r.wid}"></div></div>
+<div class="actions"><button class="btn green" data-ap="${r.wid}">${label}</button><button class="btn red" data-bl="${r.wid}">Block</button></div>`;
     }
-  });
+    return `<div class="card" style="border-left-color:${s === 'active' ? 'var(--green)' : s === 'pending' || s === 'none' ? 'var(--accent)' : 'var(--red)'}"><div class="top"><div><b>${esc(r.name || r.email || r.wid)}</b><br><span class="sm">${info}</span></div><span class="status ${s}">${LABEL[s]}</span></div>${ctl}</div>`;
+  }).join('');
+}
+
+function val(attr, wid) { return document.querySelector(`[${attr}="${wid}"]`).value; }
+
+$('users').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  try {
+    if (b.dataset.ap) {
+      const wid = b.dataset.ap, r = rows[wid], m = parseInt(val('data-m', wid), 10);
+      const amt = parseFloat(val('data-a', wid)) || 0, txn = val('data-t', wid).trim();
+      if (!amt && !confirm('No amount entered. Approve anyway?')) return;
+      const cur = r.sub && r.sub.status === 'active' ? Number(r.sub.expiresAt) || 0 : 0;
+      const d = new Date(Math.max(Date.now(), cur)); d.setMonth(d.getMonth() + m);
+      const base = { status: 'active', expiresAt: d.getTime(), lastPay: { amount: amt, txn: txn, months: m, at: Date.now() }, paidTotal: increment(amt), updatedAt: serverTimestamp() };
+      if (!r.sub) { base.ownerUid = ''; base.email = r.email; base.name = r.name; base.createdAt = serverTimestamp(); }
+      await setDoc(doc(db, 'subscriptions', wid), base, { merge: true });
+      await addDoc(collection(db, 'subscriptions', wid, 'payments'), { amount: amt, txn: txn, months: m, at: serverTimestamp(), by: ADMIN });
+    } else if (b.dataset.bl) {
+      if (!confirm('Block this client? They are locked out immediately.')) return;
+      await setDoc(doc(db, 'subscriptions', b.dataset.bl), { status: 'blocked', updatedAt: serverTimestamp() }, { merge: true });
+    } else if (b.dataset.un) {
+      const r = rows[b.dataset.un];
+      await setDoc(doc(db, 'subscriptions', b.dataset.un), { status: 'active', expiresAt: (r.sub && Number(r.sub.expiresAt) > Date.now()) ? r.sub.expiresAt : Date.now() + 86400000, updatedAt: serverTimestamp() }, { merge: true });
+    } else return;
+    load();
+  } catch (err) { alert('Could not save: ' + err.message); }
+});
+
+onAuthStateChanged(auth, user => {
+  const ok = user && user.email === ADMIN;
+  $('login').style.display = ok ? 'none' : 'block';
+  $('dash').style.display = ok ? 'block' : 'none';
+  $('logout').style.display = ok ? 'block' : 'none';
+  $('refreshBtn').style.display = ok ? 'inline-block' : 'none';
+  clearInterval(timer);
+  if (ok) { load(); timer = setInterval(load, 60000); }
+});
 </script>
 </body>
 </html>
