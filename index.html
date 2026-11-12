@@ -186,6 +186,35 @@ function numFix(r){(r.querySelectorAll?r.querySelectorAll('input[type=number]'):
 document.addEventListener('input',function(e){var t=e.target;if(t&&t.dataset&&t.dataset.n==='1'){var v=bn2en(t.value);if(v!==t.value){t.value=v;try{t.setSelectionRange(v.length,v.length)}catch(x){}}}},true);
 if(window.MutationObserver){new MutationObserver(function(ms){ms.forEach(function(m){m.addedNodes.forEach(function(n){if(n.nodeType===1)numFix(n)})})}).observe(document.documentElement,{childList:true,subtree:true})}
 numFix(document);
+
+/* ---- smart suggestions: reuse words already typed anywhere in the data ---- */
+function sugCollect(key){
+var seen={},order=0,out=[];
+function add(v){if(typeof v!=='string')return;v=supClean(v);if(!v||v.length>120||/^[\d.,\s\-\/+*]+$/.test(v))return;var k=supKey(v),e=seen[k];if(!e){e=seen[k]={v:v,n:0,o:0};out.push(e)}e.n++;e.o=++order;e.v=v}
+(D.companies||[]).forEach(function(c){
+if(key==='cust'){(c.sal||[]).forEach(function(r){add(r.cust)});(c.rcpt||[]).forEach(function(r){add(r.cust)})}
+else if(key==='pn'){(c.debt||[]).forEach(function(r){add(r.item)});(c.stk||[]).forEach(function(r){add(r.name)})}
+else if(key==='rcpt:desc'){(c.rcpt||[]).forEach(function(r){(r.items||[]).forEach(function(i){add(i.desc)})})}
+else{var m=key.split(':');(c[m[0]]||[]).forEach(function(r){if(r&&typeof r==='object')add(r[m[1]])})}});
+out.sort(function(a,b){return b.n-a.n||b.o-a.o});
+return out.slice(0,300).map(function(e){return e.v})}
+function sugKeyOf(el){
+if(!el||el.tagName!=='INPUT'||el.readOnly||el.disabled)return '';
+var ty=(el.getAttribute('type')||'text').toLowerCase();if(ty!=='text')return '';
+var im=(el.getAttribute('inputmode')||'').toLowerCase();if(im==='decimal'||im==='tel'||im==='numeric')return '';
+if(el.hasAttribute('data-n'))return '';
+var d=el.dataset||{},id=el.id||'';
+if(d.k&&d.f){if(d.f==='d'||d.f==='kind')return '';return d.k+':'+d.f}
+if(d.r){if(d.r==='no'||d.r==='phone')return '';return d.r==='cust'?'cust':d.r==='desc'?'rcpt:desc':'rcpt:'+d.r}
+if(d.c==='cust')return 'cust';
+if(id==='sn')return 'stk:name';if(id==='su')return 'stk:unit';if(id==='pn')return 'pn';
+return ''}
+document.addEventListener('focusin',function(e){
+var el=e.target,key=sugKeyOf(el);if(!key)return;
+var dl='sg_'+key.replace(/[^a-z]/gi,'_'),box=document.getElementById(dl);
+if(!box){box=document.createElement('datalist');box.id=dl;document.body.appendChild(box)}
+var list=sugCollect(key),h='';for(var i=0;i<list.length;i++)h+='<option value="'+esc(list[i])+'">';
+box.innerHTML=h;el.setAttribute('list',dl);el.setAttribute('autocomplete','off')});
 function pad(n){return ('0000'+n).slice(-4)}
 function daysIn(m){return new Date(+m.slice(0,4),+m.slice(5,7),0).getDate()}
 function newCart(){return{d:today(),cust:'',phone:'',paid:'',lines:[]}}
@@ -284,12 +313,12 @@ function f(k,t,ph,x){return '<td><input '+(t?'type="'+t+'" ':'')+(t==='number'?'
 var rateV=(r.rate===''||r.rate==null)?'':Math.round(num(r.rate)*100)/100;
 var un=r.unit==='ton'||r.unit==='bag'?r.unit:'kg';
 var totCell=auto?'<td><input type="text" inputmode="decimal" readonly tabindex="-1" value="'+esc(tot)+'" style="font-weight:700;opacity:.9" title="Auto: quantity × price per unit"></td>':f('price','number','Total');
-body+='<tr>'+f('d','date')+f('sup','','Supplier','list="dsup" ')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(un==='kg'?' selected':'')+'>kg</option><option'+(un==='ton'?' selected':'')+'>ton</option><option'+(un==='bag'?' selected':'')+'>bag</option></select></div></td>'
+body+='<tr>'+f('d','date')+f('sup','','Supplier')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(un==='kg'?' selected':'')+'>kg</option><option'+(un==='ton'?' selected':'')+'>ton</option><option'+(un==='bag'?' selected':'')+'>bag</option></select></div></td>'
 +'<td><input type="number" inputmode="decimal" value="'+esc(rateV)+'" placeholder="per '+un+'" data-f="rate" data-k="debt" data-id="'+r.id+'"></td>'+totCell+f('paid','number')+'<td class="r '+(left>0?'neg':'')+'">'+money(left)+'</td><td><button class="x" data-a="del" data-k="debt" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='debt'+r.id?'?':'×')+'</button></td></tr>'});
 var g={},names={};c.debt.forEach(function(r){var nm=supClean(r.sup)||'(no name)',k=supKey(nm)||'(no name)';if(!g[k])g[k]={n:nm,p:0,d:0};g[k].p+=dTot(r);g[k].d+=num(r.paid);if(supClean(r.sup))names[k]=names[k]||nm});
 var gs=Object.keys(g).map(function(k){return g[k]}).filter(function(x){return !q||x.n.toLowerCase().indexOf(q)>-1}),sb='';
 gs.forEach(function(x){sb+='<tr><td class="r" style="text-align:left">'+esc(x.n)+'</td><td class="r">'+money(x.p)+'</td><td class="r">'+money(x.d)+'</td><td class="r '+(x.p-x.d>0?'neg':'')+'"><b>'+money(x.p-x.d)+'</b></td></tr>'});
-var dl='<datalist id="dsup">'+Object.keys(names).map(function(k){return '<option value="'+esc(names[k])+'">'}).join('')+'</datalist>';
+var dl='';
 return '<div class="tiles"><div class="tile"><small>Total price</small><b>'+money(tp)+'</b></div><div class="tile"><small>Paid</small><b class="pos">'+money(tpd)+'</b></div><div class="tile"><small>Left to pay</small><b class="neg">'+money(tp-tpd)+'</b></div></div>'+dl
 +'<div class="sheet"><table style="min-width:1050px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:160px">Quantity (kg / ton / bag)</th><th style="width:110px">Price per unit ৳</th><th style="width:120px">Total price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="9" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
 +'<h3>By supplier</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Total</th><th>Paid</th><th>Left</th></tr>'+(sb||'<tr><td colspan="4" class="r" style="text-align:left">No suppliers yet.</td></tr>')+'</table></div><p class="note">Total price = quantity × price per unit (automatic). For a payment only, fill the Paid cell. Left on each row = what you still owe that supplier after that row (purchases minus payments, in date order), calculated for you. <small>(Debt table v2)</small></p>'}
