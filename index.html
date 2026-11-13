@@ -51,6 +51,7 @@ tr.tot td{font-weight:800;background:var(--bg);padding:8px 6px}
 .tabs{display:flex;margin-bottom:12px}
 .tab{flex:1;font:800 1.05rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;padding:10px;background:var(--surface);color:var(--ink);border:2px solid var(--dark);cursor:pointer}
 .tab.on{background:var(--dark);color:var(--accent)}
+.tabs .tab{padding:10px 4px;font-size:.95rem}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .g2 label,.f label{display:block;font-size:.75rem;font-weight:600;color:var(--mute)}
 .adj{display:flex;gap:6px;margin-top:8px}.adj input{flex:1}
@@ -219,11 +220,11 @@ function pad(n){return ('0000'+n).slice(-4)}
 function daysIn(m){return new Date(+m.slice(0,4),+m.slice(5,7),0).getDate()}
 function newCart(){return{d:today(),cust:'',phone:'',paid:'',lines:[]}}
 /* CHANGED: added rtab, rid */
-var S={v:'co',cid:null,atab:'inc',tab:'stock',wtab:'info',month:today().slice(0,7),date:today(),rd:today(),td:today(),sd:today(),ld:'',lq:'',wsq:'',wid:'',wm:today().slice(0,7),arm:'',q:'',sq:'',dq:'',mv:'',dlg:'',inv:'',cart:newCart(),rtab:'list',rid:''};
+var S={v:'co',cid:null,atab:'inc',tab:'stock',wtab:'info',month:today().slice(0,7),date:today(),rd:today(),td:today(),sd:today(),ld:'',lq:'',wsq:'',wid:'',wm:today().slice(0,7),arm:'',q:'',sq:'',dq:'',mv:'',dlg:'',inv:'',cart:newCart(),rtab:'list',rid:'',slq:'',wslid:'',wsld:today(),sdid:'',lot:'',serq:'',bim:today().slice(0,7),bisal:1};
 function C(){return D.companies.filter(function(c){return c.id===S.cid})[0]}
 function armLbl(k){return S.arm===k?'Tap again to delete':'Delete'}
 function item(c,id){return c.stk.filter(function(x){return x.id===id})[0]}
-function mvAdj(c,it,delta,type,note,d){it.qty=num(it.qty)+delta;c.mov.push({id:uid(),d:d||today(),pid:it.id,name:it.name,unit:it.unit,delta:delta,type:type,note:note||''})}
+function mvAdj(c,it,delta,type,note,d,x){it.qty=num(it.qty)+delta;var m={id:uid(),d:d||today(),pid:it.id,name:it.name,unit:it.unit,delta:delta,type:type,note:note||''};if(x)Object.keys(x).forEach(function(k){m[k]=x[k]});c.mov.push(m)}
 var TYPES={'in':'Produced / in','out':'Stock out',sale:'Sold',set:'Adjusted',open:'Opening'};
 function saleTotal(s){return s.lines.reduce(function(a,l){return a+l.qty*l.price},0)}
 
@@ -329,27 +330,27 @@ function f(k,t,ph,x){return '<td><input '+(t?'type="'+t+'" ':'')+(t==='number'?'
 var rateV=(r.rate===''||r.rate==null)?'':Math.round(num(r.rate)*100)/100;
 var un=r.unit==='ton'||r.unit==='bag'?r.unit:'kg';
 var totCell=auto?'<td><input type="text" inputmode="decimal" readonly tabindex="-1" value="'+esc(tot)+'" style="font-weight:700;opacity:.9" title="Auto: quantity × price per unit"></td>':f('price','number','Total');
-body+='<tr>'+f('d','date')+f('sup','','Supplier')+f('item','','Raw material')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(un==='kg'?' selected':'')+'>kg</option><option'+(un==='ton'?' selected':'')+'>ton</option><option'+(un==='bag'?' selected':'')+'>bag</option></select></div></td>'
+body+='<tr>'+f('d','date')+f('sup','','Supplier')+f('item','','Raw material')+f('ser','','Serial')+'<td><div style="display:flex;align-items:center"><input type="number" inputmode="decimal" value="'+esc(r.qty)+'" data-f="qty" data-k="debt" data-id="'+r.id+'" style="min-width:70px"><select data-f="unit" data-k="debt" data-id="'+r.id+'" style="width:76px;padding:8px 2px"><option'+(un==='kg'?' selected':'')+'>kg</option><option'+(un==='ton'?' selected':'')+'>ton</option><option'+(un==='bag'?' selected':'')+'>bag</option></select></div></td>'
 +'<td><input type="number" inputmode="decimal" value="'+esc(rateV)+'" placeholder="per '+un+'" data-f="rate" data-k="debt" data-id="'+r.id+'"></td>'+totCell+f('paid','number')+'<td class="r '+(left>0?'neg':'')+'">'+money(left)+'</td><td><button class="x" data-a="del" data-k="debt" data-id="'+r.id+'" aria-label="Delete row">'+(S.arm==='debt'+r.id?'?':'×')+'</button></td></tr>'});
 var g={},names={};c.debt.forEach(function(r){var nm=supClean(r.sup)||'(no name)',k=supKey(nm)||'(no name)';if(!g[k])g[k]={n:nm,p:0,d:0};g[k].p+=dTot(r);g[k].d+=num(r.paid);if(supClean(r.sup))names[k]=names[k]||nm});
 var gs=Object.keys(g).map(function(k){return g[k]}).filter(function(x){return !q||x.n.toLowerCase().indexOf(q)>-1}),sb='';
 gs.forEach(function(x){sb+='<tr><td class="r" style="text-align:left">'+esc(x.n)+'</td><td class="r">'+money(x.p)+'</td><td class="r">'+money(x.d)+'</td><td class="r '+(x.p-x.d>0?'neg':'')+'"><b>'+money(x.p-x.d)+'</b></td></tr>'});
 var dl='';
 return '<div class="tiles"><div class="tile"><small>Total price</small><b>'+money(tp)+'</b></div><div class="tile"><small>Paid</small><b class="pos">'+money(tpd)+'</b></div><div class="tile"><small>Left to pay</small><b class="neg">'+money(tp-tpd)+'</b></div></div>'+dl
-+'<div class="sheet"><table style="min-width:1050px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:160px">Quantity (kg / ton / bag)</th><th style="width:110px">Price per unit ৳</th><th style="width:120px">Total price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="9" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
++'<div class="sheet"><table style="min-width:1140px"><tr><th style="width:140px">Date</th><th>Supplier</th><th>Raw material</th><th style="width:90px">Serial</th><th style="width:160px">Quantity (kg / ton / bag)</th><th style="width:110px">Price per unit ৳</th><th style="width:120px">Total price ৳</th><th style="width:110px">Paid ৳</th><th style="width:120px">Left ৳</th><th style="width:40px"></th></tr>'+(body||'<tr><td colspan="10" class="r" style="text-align:left">No rows yet.</td></tr>')+'</table></div>'
 +'<h3>By supplier</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Total</th><th>Paid</th><th>Left</th></tr>'+(sb||'<tr><td colspan="4" class="r" style="text-align:left">No suppliers yet.</td></tr>')+'</table></div><p class="note">Total price = quantity × price per unit (automatic). For a payment only, fill the Paid cell. Left on each row = what you still owe that supplier after that row (purchases minus payments, in date order), calculated for you. <small>(Debt table v2)</small></p>'}
 
 /* stock */
-function vStk(){return '<h2>Stock inventory</h2>'+tabs(['stock:Stock','sell:Sell','total:Total stock'],S.tab,'tab')+(S.tab==='stock'?stockTab():S.tab==='sell'?sellTab():totalTab())}
+function vStk(){return '<h2>Stock inventory</h2>'+tabs(['stock:Stock','sell:Sell','total:Total stock','ser:Serials'],S.tab,'tab')+(S.tab==='stock'?stockTab():S.tab==='sell'?sellTab():S.tab==='ser'?serTab():totalTab())}
 function lastMv(c,id){for(var i=c.mov.length-1;i>=0;i--)if(c.mov[i].pid===id){var m=c.mov[i];return dmy(m.d)+': '+TYPES[m.type]+' '+(m.delta>0?'+':'−')+Math.abs(m.delta)}return ''}
 function stockTab(){var nt=S.sd!==today()?'<p class="note" style="color:var(--accent)">Entering stock for '+dmy(S.sd)+'. Set the date back to today for today’s entries.</p>':'';return '<div class="card"><label class="note">Stock entry date (pick an earlier day to add forgotten stock)</label><input type="date" id="sd" value="'+S.sd+'">'+nt+'</div><input id="q" placeholder="Search product..." value="'+esc(S.q)+'" autocomplete="off"><details class="card" style="margin-top:10px"><summary>+ Add new item</summary><div class="g2"><div><label>Item name</label><input id="sn" placeholder="e.g. PP granules, Red color"></div><div><label>Unit</label><input id="su" placeholder="kg, bag, pcs"></div></div><label class="note">Type</label><select id="sk"><option value="product">Product (counts as production)</option><option value="raw">Raw material</option></select><label class="note">Starting quantity</label><input id="sq0" type="number" inputmode="decimal" placeholder="0"><button class="btn full" data-a="addstk">Add item</button></details><div id="sl">'+stkList(C())+'</div>'+stkEntries(C())}
 function stkEntries(c){
 var a=c.mov.filter(function(m){return m.d===S.sd});
-return '<h3>Stock entries on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.note?' · '+esc(m.note):'')+'</small></div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No stock entries on this date.</p>')}
+return '<h3>Stock entries on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.ser?' · Serial '+esc(m.ser)+(m.bn?' / batch '+esc(m.bn):''):'')+(m.note?' · '+esc(m.note):'')+'</small></div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No stock entries on this date.</p>')}
 function stkList(c){
 var q=S.q.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1});
 if(!a.length)return '<p class="note">'+(c.stk.length?'No product matches.':'No items yet. Add your first item above.')+'</p>';
-return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div><div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small><button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div></div>'}).join('')}
+return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div>'+serBox(c,i)+'<div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small>'+(i.kind==='raw'?'':'<button class="btn sm" data-a="serd" data-id="'+i.id+'">By serial</button>')+'<button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div></div>'}).join('')}
 
 function sellRes(c){
 var q=S.sq.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1}).slice(0,8);
@@ -560,7 +561,7 @@ h+='<button class="btn full" style="margin:0 0 12px" data-a="addw">+ Add worker<
 if(!c.wrk.length)h+='<p class="note">No workers yet.</p>';
 c.wrk.forEach(function(w){
 function f(k,l,t,ph){return '<div class="f"><label>'+l+'</label><input '+(t?'type="'+t+'" ':'')+(t==='number'?'inputmode="decimal" ':'')+'value="'+esc(w[k])+'" placeholder="'+(ph||'')+'" data-f="'+k+'" data-k="wrk" data-id="'+w.id+'"></div>'}
-h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('phone2','Phone number 2','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('joined','Joining date','date')+f('note','Address / note')+f('extra','Additional information')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
+h+='<div class="card"><div class="g2">'+f('name','Name')+f('phone','Phone','tel')+f('phone2','Phone number 2','tel')+f('role','Role / work')+f('wage','Monthly salary ৳','number')+f('sday','Salary day (1-31)','number','e.g. 10')+f('joined','Joining date','date')+f('note','Address / note')+f('extra','Additional information')+'</div><div style="margin-top:8px;display:flex;justify-content:space-between"><button class="btn sm" data-a="wopen" data-id="'+w.id+'">View history</button><button class="btn alt sm" data-a="del" data-k="wrk" data-id="'+w.id+'">'+armLbl('wrk'+w.id)+'</button></div></div>'});
 return h+'<p class="note">Salary is monthly. The daily amount is worked out from attendance: monthly salary ÷ days in that month, for each day present.</p>'}
 if(S.wtab==='att')return h+attHtml(c);
 if(S.wtab==='slip')return h+slipTab(c);
@@ -585,7 +586,7 @@ var h='<div class="sheet"><table style="min-width:600px"><tr><th>Worker</th><th>
 c.wrk.forEach(function(w){var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id);te+=e.earn;ta+=a;
 h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+e.days+'</td><td class="r">'+money(num(w.wage))+'</td><td class="r">'+money(e.earn)+'</td><td class="r">'+money(a)+'</td><td class="r '+(e.earn-a<0?'neg':'pos')+'"><b>'+money(e.earn-a)+'</b></td></tr>'});
 h+='<tr class="tot"><td colspan="3">Total</td><td class="r">'+money(te)+'</td><td class="r">'+money(ta)+'</td><td class="r '+(te-ta<0?'neg':'pos')+'">'+money(te-ta)+'</td></tr></table></div><p class="note">Earned = salary for the days present, up to today, from the attendance sheet. Due = Earned − Advance. A red minus number is extra advance: it gets smaller every day the worker is present, and is cut from his salary.</p>';
-h+='<h3>Give advance</h3><div class="card"><label class="note">Worker</label><select id="aw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2"><div><label>Date</label><input type="date" id="adt" value="'+today()+'"></div><div><label>Amount ৳</label><input type="number" inputmode="decimal" id="aam"></div></div><label class="note">Note (optional)</label><input id="ano"><p class="note">You can give more than he has earned. The extra shows in red as a minus number and is adjusted from his coming earnings.</p><button class="btn full" data-a="addadv">Save advance</button></div>';
+h+=cycTable(c);h+='<h3>Give advance</h3><div class="card"><label class="note">Worker</label><select id="aw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2"><div><label>Date</label><input type="date" id="adt" value="'+today()+'"></div><div><label>Amount ৳</label><input type="number" inputmode="decimal" id="aam"></div></div><label class="note">Note (optional)</label><input id="ano"><p class="note">You can give more than he has earned. The extra shows in red as a minus number and is adjusted from his coming earnings.</p><button class="btn full" data-a="addadv">Save advance</button></div>';
 h+=payCard(c);
 h+='<h3>Advance list</h3>';
 if(!c.adv.length)h+='<p class="note">No advances yet.</p>';
@@ -602,7 +603,7 @@ var c=C(),w=c.wrk.filter(function(x){return x.id===S.wid})[0];
 if(!w)return '<p class="note">Worker not found.</p>';
 var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id),m=S.wm,ms={},days=[],n={P:0,A:0,L:0,H:0},NAME={P:'Present',A:'Absent',L:'Leave',H:'Half day'};
 Object.keys(c.att).sort().forEach(function(k){var s=c.att[k][w.id];if(!s)return;var mm=k.slice(0,7),o=ms[mm]||(ms[mm]={P:0,A:0,L:0,H:0});o[s]++;if(mm===m){n[s]++;days.push([k,s])}});
-var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div>'+(w.phone2?'<div><label>Phone 2</label>'+esc(w.phone2)+'</div>':'')+'<div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+(w.extra?'<p class="note"><b>More:</b> '+esc(w.extra)+'</p>':'')+'</div>';
+var h='<h2>'+esc(w.name||'(no name)')+'</h2><div class="card"><div class="g2"><div><label>Phone</label>'+esc(w.phone||'-')+'</div>'+(w.phone2?'<div><label>Phone 2</label>'+esc(w.phone2)+'</div>':'')+'<div><label>Role</label>'+esc(w.role||'-')+'</div><div><label>Monthly salary</label>'+money(num(w.wage))+'</div><div><label>Salary day</label>'+(sdayOf(w)||'not set')+'</div><div><label>Joined</label>'+(w.joined?esc(dmy(w.joined)):'-')+'</div></div>'+(w.note?'<p class="note">'+esc(w.note)+'</p>':'')+(w.extra?'<p class="note"><b>More:</b> '+esc(w.extra)+'</p>':'')+'</div>';
 h+='<div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Days present (all time)</small><b>'+e.days+'</b></div><div class="tile"><small>Earned till today</small><b>'+money(e.earn)+'</b></div><div class="tile"><small>Advance taken</small><b class="neg">'+money(a)+'</b></div><div class="tile"><small>Due</small><b class="'+(e.earn-a<0?'neg':'pos')+'">'+money(e.earn-a)+'</b></div></div>';
 if(e.earn-a<0)h+='<p class="neg" style="margin:0 0 8px"><b>Extra advance '+money(a-e.earn)+'.</b> It is adjusted from his earnings day by day.</p>';
 var mk=Object.keys(ms).sort().reverse();
@@ -615,24 +616,6 @@ return h}
 
 /* date report */
 function qtyAt(c,it,d){var q=num(it.qty);c.mov.forEach(function(m){if(m.pid===it.id&&m.d>d)q-=m.delta});return q}
-function vDay(){
-var c=C(),d=S.rd,i=0,e=0,bal=0;
-c.led.forEach(function(r){if(r.d===d){i+=num(r.inc);e+=num(r.exp)}if(r.d<=d)bal+=num(r.inc)-num(r.exp)});
-var h='<h2>Date report</h2><input type="date" id="rd" value="'+d+'"><div class="tiles"><div class="tile"><small>Income</small><b class="pos">'+money(i)+'</b></div><div class="tile"><small>Expense</small><b class="neg">'+money(e)+'</b></div><div class="tile"><small>Balance to date</small><b>'+money(bal)+'</b></div></div>';
-h+='<h3>Income &amp; expense entries</h3>';
-var lr=c.led.filter(function(r){return r.d===d});
-h+=lr.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Note</th><th>Income</th><th>Expense</th></tr>'+lr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.note)+'</td><td class="r">'+money(num(r.inc))+'</td><td class="r">'+money(num(r.exp))+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>';
-var dr=c.debt.filter(function(r){return r.d===d});
-if(dr.length)h+='<h3>Factory debt entries</h3><div class="sheet"><table style="min-width:420px"><tr><th>Supplier</th><th>Material</th><th>Quantity</th><th>Price/unit</th><th>Total</th><th>Paid</th></tr>'+dr.map(function(r){return '<tr><td class="r" style="text-align:left">'+esc(r.sup)+'</td><td class="r">'+esc(r.item)+'</td><td class="r">'+(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-')+'</td><td class="r">'+(num(r.rate)?money(num(r.rate)):'-')+'</td><td class="r">'+money(dTot(r))+'</td><td class="r">'+money(num(r.paid))+'</td></tr>'}).join('')+'</table></div>';
-var mv=c.mov.filter(function(m){return m.d===d});
-h+='<h3>Stock movements</h3>'+(mv.length?'<div class="sheet"><table style="min-width:420px"><tr><th>Item</th><th>Type</th><th>Qty</th></tr>'+mv.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(m.name)+'</td><td class="r">'+TYPES[m.type]+'</td><td class="r '+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</td></tr>'}).join('')+'</table></div>':'<p class="note">None.</p>');
-h+='<h3>Stock at end of this day</h3>'+(c.stk.length?'<div class="sheet"><table style="min-width:360px"><tr><th>Item</th><th>In stock</th></tr>'+c.stk.map(function(it){return '<tr><td class="r" style="text-align:left">'+esc(it.name)+'</td><td class="r"><b>'+qtyAt(c,it,d)+' '+esc(it.unit)+'</b></td></tr>'}).join('')+'</table></div>':'<p class="note">No items.</p>');
-var ss=c.sal.filter(function(s){return s.d===d}),st=0;
-h+='<h3>Sales</h3>'+(ss.length?ss.map(function(s){var t=saleTotal(s);st+=t;return '<div class="item" data-a="openinv" data-id="'+s.id+'"><div><b>'+esc(s.no)+' · '+esc(s.cust||'Walk-in')+'</b></div><b>'+money(t)+'</b></div>'}).join('')+'<div class="tot"><span>Total sales</span><span>'+money(st)+'</span></div>':'<p class="note">None.</p>');
-var day=c.att[d]||{},n={P:0,A:0,L:0,H:0};
-h+='<h3>Attendance</h3>'+(c.wrk.length?'<div class="sheet"><table style="min-width:300px"><tr><th>Worker</th><th>Status</th></tr>'+c.wrk.map(function(w){var s=day[w.id];if(s)n[s]++;return '<tr><td class="r" style="text-align:left">'+esc(w.name)+'</td><td class="r">'+({P:'Present',A:'Absent',L:'Leave',H:'Half day'}[s]||'-')+'</td></tr>'}).join('')+'</table></div><p class="note">Present: '+n.P+' · Half day: '+n.H+' · Absent: '+n.A+' · Leave: '+n.L+'</p>':'<p class="note">No workers.</p>');
-return h}
-
 /* ---------- render ---------- */
 var FOC='';
 function dlgHtml(){
@@ -645,13 +628,13 @@ var c=S.cid?C():null;
 document.body.classList.add('co');document.body.classList.toggle('front',S.v==='co');$('tick').innerHTML=tickHtml();
 $('bk').hidden=S.v==='co';$('lg').style.display=S.v==='co'?'':'none';
 $('tt').textContent=S.v==='acct'?'Account':S.v==='team'?'Team':S.v==='audit'?'Activity':S.v==='rcpt'?'Receipts':(S.v==='co'||!c)?'Factory Manager':c.name;
-$('app').innerHTML=({co:vCo,home:vHome,acc:vAcc,stk:vStk,wrk:vWrk,day:vDay,inv:vInv,wp:vWp,acct:vAcct,team:vTeam,audit:vAudit,rcpt:vRcpt,bi:vBi,po:vPo,sps:vSps})[S.v]();
+$('app').innerHTML=({co:vCo,home:vHome,acc:vAcc,stk:vStk,wrk:vWrk,day:vDay,inv:vInv,wp:vWp,acct:vAcct,team:vTeam,audit:vAudit,rcpt:vRcpt,bi:vBi,po:vPo,sps:vSps,wsl:vWsl,sd:vSd,lot:vLot})[S.v]();
 $('dlg').innerHTML=dlgHtml();
 if(RO)applyRO();setStatus();if(CLOUDMODE&&CL.ready){if(S.v==='team')loadTeam();if(S.v==='audit')loadAudit()}
 anim();
 if(FOC){var fe=document.querySelector(FOC);FOC='';if(fe){fe.scrollIntoView({block:'center'});fe.focus()}}}
 function find(k,id){var l=k==='co'?D.companies:C()[k];return l.filter(function(x){return x.id===id})[0]}
-function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else if(S.v==='rcpt'){if(S.rtab==='print')S.rtab='form';else if(S.rtab==='form'){S.rtab='list';S.rid=''}else{S.v='stk';S.tab='sell'}}else if(S.v==='sps'){S.v='wrk';S.wtab='slip'}else S.v='home';render();window.scrollTo(0,0)}
+function back(){S.arm='';S.mv='';if(S.v==='co')return;if(S.v==='home')S.v='co';else if(S.v==='inv'){S.v='stk';S.tab='sell'}else if(S.v==='wp'){S.v='wrk'}else if(S.v==='acct'){S.v='co'}else if(S.v==='team'||S.v==='audit'){S.v='acct'}else if(S.v==='rcpt'){if(S.rtab==='print')S.rtab='form';else if(S.rtab==='form'){S.rtab='list';S.rid=''}else{S.v='stk';S.tab='sell'}}else if(S.v==='sps'||S.v==='wsl'){S.v='wrk';S.wtab='slip'}else if(S.v==='sd'){S.v='stk';S.tab='stock'}else if(S.v==='lot'){S.v='stk';S.tab='ser'}else S.v='home';render();window.scrollTo(0,0)}
 
 /* ---------- events ---------- */
 var lpT=0,lpFired=false,lpX=0,lpY=0;
@@ -668,6 +651,8 @@ else if(t.id==='sq'){S.sq=t.value;$('sr').innerHTML=sellRes(C())}
 else if(t.id==='lq'){S.lq=t.value;$('lr').innerHTML=ledBody()}
 else if(t.id==='dq'){S.dq=t.value;$('dt').innerHTML=debtTable(C())}
 else if(t.id==='wsq'){S.wsq=t.value;$('wsr').innerHTML=wsRes(C())}
+else if(t.id==='slq'){S.slq=t.value;$('slr').innerHTML=slipRes(C())}
+else if(t.id==='serq'){S.serq=t.value;$('serl').innerHTML=serList(C())}
 else if(t.dataset&&t.dataset.c)cartSet(t)
 else if(t.dataset&&t.dataset.r)rcptSet(t)});
 
@@ -676,7 +661,9 @@ document.addEventListener('change',function(e){
 var t=e.target;
 if(t.dataset&&t.dataset.f){var c=S.cid?C():null,it=find(t.dataset.k,t.dataset.id);if(!it)return;
 var f=t.dataset.f,v=t.value,k=t.dataset.k;
-if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid'||f==='rate')v=v===''?'':parseFloat(bn2en(v));
+if(f==='inc'||f==='exp'||f==='qty'||f==='wage'||f==='price'||f==='paid'||f==='rate'||f==='sday')v=v===''?'':parseFloat(bn2en(v));
+if(f==='sday'&&v!==''&&!isNaN(v))v=Math.max(1,Math.min(31,Math.round(v)));
+if(f==='ser')v=bn2en(v).trim();
 if(f==='d'&&!v)v=today();
 if(k==='stk'&&f==='qty'){var nq=num(v),dl=nq-num(it.qty);if(dl)mvAdj(c,it,dl,'set','',S.sd);save();render();return}
 if(k==='debt'&&f==='sup')v=supClean(v);
@@ -706,7 +693,10 @@ else if(t.id==='ad'&&t.value){S.date=t.value;render()}
 else if(t.id==='rd'&&t.value){S.rd=t.value;render()}
 else if(t.id==='td'&&t.value){S.td=t.value;render()}
 else if(t.id==='sd'&&t.value){S.sd=t.value;render()}
-else if(t.id==='wm'&&t.value){S.wm=t.value;render()}});
+else if(t.id==='wm'&&t.value){S.wm=t.value;render()}
+else if(t.id==='wsld'&&t.value){S.wsld=t.value;render()}
+else if(t.id==='bim'&&t.value){S.bim=t.value;render()}
+else if(t.id==='sw'){var pdf=payDef(C(),t.value);if($('sf'))$('sf').value=pdf.f;if($('st'))$('st').value=pdf.t}});
 $('bk').addEventListener('click',back);
 $('rf').addEventListener('change',function(e){
 var f=e.target.files[0];if(!f)return;var r=new FileReader();
@@ -732,7 +722,7 @@ else if(a==='deldue'){if(!confirm('Delete this due?'))return;c.due=(c.due||[]).f
 else if(a==='recvdue'){var rk=b.dataset.k,rec=(rk==='r'?c.rcpt:rk==='m'?c.due:c.sal).filter(function(x){return x.id===id})[0];if(!rec)return;
 var tt=rk==='r'?rcptTotal(rec):rk==='m'?num(rec.amt):saleTotal(rec),dd=Math.round((tt-num(rec.paid))*100)/100,ans=prompt('Amount received now (৳). Due: '+money(dd),String(dd));if(ans===null)return;
 var am2=Math.round(num(ans)*100)/100;if(am2<=0){toast('Enter an amount');return}if(am2>dd){toast('More than the due: '+money(dd));return}
-rec.paid=Math.round((num(rec.paid)+am2)*100)/100;save();render();toast('Received '+money(am2))}
+rec.paid=Math.round((num(rec.paid)+am2)*100)/100;rec.pays=(rec.pays||[]).concat([{d:today(),amt:am2}]);save();render();toast('Received '+money(am2))}
 else if(a==='atab'){S.atab=b.dataset.t;S.arm='';render()}
 else if(a==='tab'){S.tab=b.dataset.t;S.arm='';render()}
 else if(a==='wtab'){S.wtab=b.dataset.t;S.arm='';S.mv='';render()}
@@ -767,10 +757,11 @@ S.arm='';c[k]=c[k].filter(function(x){return x.id!==id});save();render()}
 else if(a==='addrow'){S.lq='';var m=S.month,nr2={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',qty:'',unit:'kg',rate:'',inc:'',exp:'',t:(S.atab==='exp'?'exp':'inc')};c.led.push(nr2);FOC='input[data-f=note][data-id="'+nr2.id+'"]';save();render()}
 else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',rate:'',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
 else if(a==='addstk'){var n2=$('sn').value.trim();if(!n2){toast('Enter the item name');return}
-var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd);save();render()}
+var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd,it.kind==='raw'?{ser:String(nextSer(c)),kd:'raw'}:null);save();render()}
 else if(a==='in'||a==='out'){var it2=find('stk',id),v=num($('adj-'+id).value);if(v<=0){toast('Enter an amount');return}
 if(a==='out'&&v>num(it2.qty)){toast('Only '+num(it2.qty)+' '+it2.unit+' in stock');return}
-mvAdj(c,it2,a==='in'?v:-v,a,'',S.sd);save();render()}
+var xs=null;if(a==='in'){xs=serPick(c,it2);if(xs===false)return}
+mvAdj(c,it2,a==='in'?v:-v,a,'',S.sd,xs);save();render()}
 else if(a==='delmv'){var key2='mv'+id;if(S.arm!==key2){S.arm=key2;render();return}
 S.arm='';var mm=c.mov.filter(function(x){return x.id===id})[0];if(!mm)return;var itx=item(c,mm.pid);
 if(itx){if(num(itx.qty)-mm.delta<-0.000001){toast('Cannot delete: part of this stock was already sold or used');render();return}itx.qty=num(itx.qty)-mm.delta}
@@ -804,14 +795,21 @@ else if(a==='poedit'){S.po=null;render()}
 else if(a==='opsp'){S.sp=id;S.v='sps';render();window.scrollTo(0,0)}
 else if(a==='delsp'){var r0=c.adv.filter(function(x){return x.id===S.sp})[0];if(!r0)return;if(r0.s){toast('This advance was already deducted in a salary slip. Delete that salary slip first.');return}
 if(!confirm('Delete this slip?'))return;if(r0.k==='paid')c.adv.forEach(function(x){if(r0.parts&&r0.parts[x.id]!=null){x.dd=Math.round((num(x.dd)-r0.parts[x.id])*100)/100;if(x.dd<=0.004)delete x.dd;delete x.s;if(x.p===r0.id)delete x.p}else if(x.p===r0.id){delete x.s;delete x.p}});c.adv=c.adv.filter(function(x){return x.id!==r0.id});save();S.v='wrk';S.wtab='slip';render()}
-else if(a==='paysal'){var w3=$('sw').value,m3=$('sm').value,d3=$('sdt').value||today(),wk3=c.wrk.filter(function(x){return x.id===w3})[0];if(!wk3||!m3){toast('Choose a worker and a month');return}
-var P3=0,H3=0;Object.keys(c.att).forEach(function(k){var s3=c.att[k][w3];if(s3&&k.slice(0,7)===m3){if(s3==='P')P3++;else if(s3==='H')H3++}});
-var base=Math.round((P3+H3/2)*num(wk3.wage)/daysIn(m3)*100)/100,ot3=0,bn3=0;c.adv.forEach(function(x){if(x.wid===w3&&x.d.slice(0,7)===m3){if(x.k==='ot')ot3+=num(x.amt);if(x.k==='bonus')bn3+=num(x.amt)}});
-var gross=base+ot3+bn3,pend=c.adv.filter(function(x){return x.wid===w3&&x.k!=='bonus'&&x.k!=='ot'&&x.k!=='paid'&&!x.s&&x.d<=d3}).sort(function(x,y){return x.d<y.d?-1:1}),ids=[],ded=0;
-var parts={};pend.forEach(function(x){var left=Math.round((num(x.amt)-num(x.dd))*100)/100,take=Math.min(left,Math.max(0,gross-ded));if(take>0.004){ded+=take;ids.push(x.id);parts[x.id]=take}});ded=Math.round(ded*100)/100;var net=Math.round((gross-ded)*100)/100;
-if(c.adv.some(function(x){return x.k==='paid'&&x.wid===w3&&x.m===m3})&&!confirm('A salary slip for this month already exists. Make another?'))return;
-if(!confirm(wk3.name+' · '+m3+'\nSalary '+money(base)+' + overtime '+money(ot3)+' + bonus '+money(bn3)+'\nAdvance deducted '+money(ded)+'\nNet payment '+money(net)+'\nPay and make slip?'))return;
-var pid=uid();c.adv.forEach(function(x){if(ids.indexOf(x.id)>-1){x.dd=Math.round((num(x.dd)+parts[x.id])*100)/100;if(x.dd>=num(x.amt)-0.004){x.s=1;x.p=pid}}});c.adv.push({id:pid,wid:w3,d:d3,k:'paid',m:m3,amt:net,net:net,base:base,ot:ot3,bonus:bn3,ded:ded,ids:ids,parts:parts,pd:P3,hd:H3,note:'salary '+m3});save();S.sp=pid;S.v='sps';render();window.scrollTo(0,0)}
+else if(a==='paysal'){var w3=$('sw').value,f3=$('sf').value,t3=$('st').value,d3=$('sdt').value||today(),wk3=c.wrk.filter(function(x){return x.id===w3})[0];
+if(!wk3||!f3||!t3||t3<f3){toast('Choose a worker and the salary period (from, to)');return}
+var at3=attPeriod(c,wk3,f3,t3),base=at3.base,ot3=sumK(c,wk3,f3,t3,'ot'),bn3=sumK(c,wk3,f3,t3,'bonus'),gross=base+ot3+bn3,lim=sdayOf(wk3)?t3:d3,
+pend=c.adv.filter(function(x){return x.wid===w3&&isAdvK(x)&&!x.s&&x.d<=lim}).sort(function(x,y){return x.d<y.d?-1:1}),ids=[],ded=0,parts={};
+pend.forEach(function(x){var left=Math.round((num(x.amt)-num(x.dd))*100)/100,take=Math.min(left,Math.max(0,gross-ded));if(take>0.004){ded+=take;ids.push(x.id);parts[x.id]=take}});
+ded=rnd(ded);var net=rnd(gross-ded);
+if(c.adv.some(function(x){return x.k==='paid'&&x.wid===w3&&x.pf===f3&&x.pt===t3})&&!confirm('A salary slip for this period already exists. Make another?'))return;
+if(!confirm((wk3.name||'')+' · '+dmy(f3)+' to '+dmy(t3)+'\nSalary '+money(base)+' + overtime '+money(ot3)+' + bonus '+money(bn3)+'\nAdvance deducted '+money(ded)+'\nNet payment '+money(net)+'\nPay and make slip?'))return;
+var pid=uid();c.adv.forEach(function(x){if(ids.indexOf(x.id)>-1){x.dd=Math.round((num(x.dd)+parts[x.id])*100)/100;if(x.dd>=num(x.amt)-0.004){x.s=1;x.p=pid}}});
+c.adv.push({id:pid,wid:w3,d:d3,k:'paid',m:t3.slice(0,7),pf:f3,pt:t3,amt:net,net:net,base:base,ot:ot3,bonus:bn3,ded:ded,ids:ids,parts:parts,pd:at3.P,hd:at3.H,note:'salary '+f3+' to '+t3});save();S.sp=pid;S.v='sps';render();window.scrollTo(0,0)}
+else if(a==='wsl'){S.wslid=id;S.wsld=today();S.v='wsl';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='serd'){S.sdid=id;S.v='sd';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='lotop'){S.lot=b.dataset.ser;S.v='lot';S.arm='';render();window.scrollTo(0,0)}
+else if(a==='shr'){var sw0=b.dataset.w;shareText(sw0==='day'?dayText(c,S.rd):sw0==='wsl'?wslText(c):sw0==='bi'?biText(c):'')}
+else if(a==='bisaltg'){S.bisal=S.bisal?0:1;render()}
 else if(a==='pr'){window.print()}
 else if(a==='wa'){
 var sv=c.sal.filter(function(x){return x.id===S.inv})[0],tt=saleTotal(sv),msg='*'+c.name+'*\nInvoice '+sv.no+' | '+dmy(sv.d)+'\nCustomer: '+(sv.cust||'Walk-in')+'\n';
@@ -819,7 +817,7 @@ sv.lines.forEach(function(l){msg+='- '+l.name+': '+l.qty+' '+l.unit+' x '+l.pric
 msg+='Total: '+money(tt)+'\nReceived: '+money(sv.paid)+'\nDue: '+money(tt-sv.paid);
 var dg=String(sv.phone).replace(/\D/g,'');if(dg.charAt(0)==='0')dg='880'+dg.slice(1);
 window.open('https://wa.me/'+dg+'?text='+encodeURIComponent(msg),'_blank')}
-else if(a==='addw'){var nw={id:uid(),name:'',phone:'',phone2:'',role:'',wage:'',joined:today(),note:'',extra:''};c.wrk.unshift(nw);FOC='input[data-f=name][data-id="'+nw.id+'"]';save();render()}
+else if(a==='addw'){var nw={id:uid(),name:'',phone:'',phone2:'',role:'',wage:'',sday:'',joined:today(),note:'',extra:''};c.wrk.unshift(nw);FOC='input[data-f=name][data-id="'+nw.id+'"]';save();render()}
 else if(a==='att'){var dy=c.att[S.date]||(c.att[S.date]={}),w=b.dataset.w,s2=b.dataset.s;if(dy[w]===s2)delete dy[w];else dy[w]=s2;save();render()}
 else if(a==='allp'){var d2=c.att[S.date]||(c.att[S.date]={});c.wrk.forEach(function(x){d2[x.id]='P'});save();render()}
 else if(a==='mvup'||a==='mvdn'){var ix=c.wrk.map(function(x){return x.id}).indexOf(id),j=a==='mvup'?ix-1:ix+1;
@@ -853,8 +851,8 @@ var COLLS=['led','debt','stk','sal','mov','wrk','adv','rcpt','due'];
 /* CHANGED: added rcpt label */
 var LBL={led:'income/expense row',debt:'factory debt row',stk:'stock item',sal:'invoice',mov:'stock entry',wrk:'worker',adv:'advance',att:'attendance day',co:'company',rcpt:'receipt'};
 /* CHANGED: added receipt view/print actions (viewers can view/print but not edit) */
-var ROA={open:1,go:1,atab:1,tab:1,wtab:1,back:1,wopen:1,ldclr:1,pr:1,openinv:1,wa:1,bak:1,signout:1,setpin:1,offpin:1,openrcpt:1,printrcpt:1,backrcpt:1,warcpt:1};
-var ROOK={q:1,sq:1,dq:1,lq:1,wsq:1,mo:1,ldf:1,ad:1,rd:1,td:1,sd:1,wm:1,pn0:1,pn1:1,pn2:1,ir:1};
+var ROA={open:1,go:1,atab:1,tab:1,wtab:1,back:1,wopen:1,ldclr:1,pr:1,openinv:1,wa:1,bak:1,signout:1,setpin:1,offpin:1,openrcpt:1,printrcpt:1,backrcpt:1,warcpt:1,opsp:1,wsl:1,serd:1,lotop:1,shr:1,bisaltg:1};
+var ROOK={q:1,sq:1,dq:1,lq:1,wsq:1,mo:1,ldf:1,ad:1,rd:1,td:1,sd:1,wm:1,pn0:1,pn1:1,pn2:1,ir:1,slq:1,serq:1,wsld:1,bim:1};
 var LOGO=($('lg')?$('lg').outerHTML:'').replace('width="34" height="34"','width="64" height="64"').replace('id="lg"','');
 
 /* ----- PIN lock (device screen lock) ----- */
@@ -1191,21 +1189,240 @@ function payCard(c){return '<h3>Overtime, bonus or loan</h3><div class="card"><s
 function vPo(){var c=C(),p=S.po;if(!p)return '<h2>Purchase order</h2><div class="card"><label>Supplier</label><input id="ps" list="sup"><datalist id="sup">'+c.debt.map(function(r){return r.sup}).filter(function(v,i,a){return v&&a.indexOf(v)===i}).map(function(v){return '<option value="'+esc(v)+'">'}).join('')+'</datalist><label>Date</label><input type="date" id="pdt" value="'+today()+'"><label>Items (one per line: name, qty, unit, price)</label><textarea id="pt" rows="6" style="width:100%" placeholder="PP scrap, 500, kg, 40"></textarea><label>VAT % (0 = none)</label><input type="number" id="pv" value="0"><button class="btn full" data-a="popr">Create purchase order</button></div>';
 var tot=0,rows=p.txt.split('\n').filter(function(l){return l.trim()}).map(function(l,i){var f=l.split(',').map(function(x){return x.trim()}),t=num(f[1])*num(f[3]);tot+=t;return '<tr><td>'+(i+1)+'</td><td>'+esc(f[0])+'</td><td class="r">'+esc(f[1])+' '+esc(f[2]||'')+'</td><td class="r">'+money(num(f[3]))+'</td><td class="r">'+money(t)+'</td></tr>'}).join(''),vt=tot*p.vat/100;
 return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>PURCHASE ORDER</div><div class="rm"><span>PO date: '+esc(dmy(p.d))+'</span></div><div><b>Supplier:</b> '+esc(p.sup)+'</div><table><tr><th>#</th><th>Item</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr>'+rows+'</table><div class="rt"><div><span>Subtotal</span><span>'+money(tot)+'</span></div><div><span>VAT</span><span>'+money(vt)+'</span></div><div class="gt"><span>Total</span><span>'+money(tot+vt)+'</span></div></div><p style="font-size:12px">Authorised signature: ____________</p></div><div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="poedit">Edit</button></div>'}
-function vBi(){var c=C(),m=today().slice(0,7),pv=new Date(+m.slice(0,4),+m.slice(5,7)-2,1),pm=pv.getFullYear()+'-'+('0'+(pv.getMonth()+1)).slice(-2),ex={},inc={},top={};
+/* ===== v27 additions: salary day, slip search, date report, monthly summary, serial numbers ===== */
+function pad2(n){return ('0'+n).slice(-2)}
+function rnd(n){return Math.round(n*100)/100}
+function fqn(n){return Math.round(num(n)*1000)/1000}
+function addDays(d,n){var t=new Date(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)+n);return t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())}
+function mEnd(m){return m+'-'+pad2(daysIn(m))}
+function sdayOf(w){var n=Math.round(num(w&&w.sday));return(n>=1&&n<=31)?n:0}
+function sdIn(sd,y,m){while(m<1){m+=12;y--}while(m>12){m-=12;y++}var ym=y+'-'+pad2(m);return ym+'-'+pad2(Math.min(sd,daysIn(ym)))}
+/* salary cycle that contains date ref: s = last salary day, e = next salary day (pay day) */
+function cyc(w,ref){var sd=sdayOf(w)||1,y=+ref.slice(0,4),m=+ref.slice(5,7),s=sdIn(sd,y,m);if(ref<s){m--;if(m<1){m=12;y--}s=sdIn(sd,y,m)}var sy=+s.slice(0,4),sm=+s.slice(5,7);return{s:s,e:sdIn(sd,sy,sm+1)}}
+function isAdvK(x){return x.k!=='bonus'&&x.k!=='ot'&&x.k!=='paid'}
+function attPeriod(c,w,a,b){var o={P:0,H:0,A:0,L:0,days:0,base:0};Object.keys(c.att).forEach(function(k){if(k<a||k>b)return;var s=c.att[k][w.id];if(!s)return;o[s]++;var f=s==='P'?1:s==='H'?.5:0;o.days+=f;o.base+=f*num(w.wage)/daysIn(k.slice(0,7))});o.base=rnd(o.base);return o}
+function sumK(c,w,a,b,kind){return c.adv.filter(function(x){return x.wid===w.id&&x.k===kind&&x.d>=a&&x.d<=b}).reduce(function(t,x){return t+num(x.amt)},0)}
+function advList(c,w,a,b){return c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d>=a&&x.d<=b}).sort(function(x,y){return x.d<y.d?-1:x.d>y.d?1:0})}
+function earnedTo(c,w,ref){var e=0,dd=0;Object.keys(c.att).forEach(function(k){if(k>ref)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});c.adv.forEach(function(a){if(a.wid===w.id&&a.d<=ref&&(a.k==='bonus'||a.k==='ot'))e+=num(a.amt)});return{days:dd,earn:e}}
+function wStmt(c,w,ref){var cy=cyc(w,ref),at=attPeriod(c,w,cy.s,ref),ot=sumK(c,w,cy.s,ref,'ot'),bn=sumK(c,w,cy.s,ref,'bonus'),al=advList(c,w,cy.s,ref),
+adv=al.reduce(function(t,x){return t+num(x.amt)},0),
+carry=c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&!x.s&&x.d<cy.s}).reduce(function(t,x){return t+num(x.amt)-num(x.dd)},0),
+inc=at.base+ot+bn,all=earnedTo(c,w,ref),
+aa=c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d<=ref}).reduce(function(t,x){return t+num(x.amt)},0),
+pd=c.adv.filter(function(x){return x.wid===w.id&&x.k==='paid'&&x.d<=ref}).reduce(function(t,x){return t+num(x.net)},0);
+return{cy:cy,at:at,ot:ot,bn:bn,al:al,adv:adv,carry:carry,inc:inc,left:rnd(inc-adv-carry),allEarn:all.earn,allDays:all.days,allAdv:aa,paid:pd,bal:rnd(all.earn-aa-pd)}}
+/* default salary period for the pay form: last finished cycle (or this month when no salary day) */
+function payDef(c,wid){var w=c.wrk.filter(function(x){return x.id===wid})[0],t=today();
+if(w&&sdayOf(w)){var cy=cyc(w,t),pv=cyc(w,addDays(cy.s,-1));return{f:pv.s,t:addDays(cy.s,-1)}}
+var m=t.slice(0,7);return{f:m+'-01',t:mEnd(m)}}
+
+/* small html helpers for white print documents */
+function hd3(t){return '<h3 style="font-size:13px;margin:14px 0 4px;color:#14171a;text-transform:uppercase">'+t+'</h3>'}
+function cell(v,r,b){return '<td'+(r?' class="r"':'')+'>'+(b?'<b>':'')+v+(b?'</b>':'')+'</td>'}
+function tblh(head,rows,empty){return rows.length?'<table><tr>'+head.map(function(h){return '<th'+(h.charAt(0)==='>'?' class="r"':'')+'>'+esc(h.replace(/^>/,''))+'</th>'}).join('')+'</tr>'+rows.join('')+'</table>':'<p style="font-size:12px;color:#555;margin:2px 0">'+(empty||'None.')+'</p>'}
+function kv(rows){return '<table>'+rows.map(function(x){return '<tr><td>'+x[0]+'</td><td class="r">'+(x[2]?'<b>':'')+x[1]+(x[2]?'</b>':'')+'</td></tr>'}).join('')+'</table>'}
+function shareText(t){if(!t)return;if(navigator.share){navigator.share({text:t}).catch(function(){})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
+
+/* ---- salary cycle table (Salary tab) ---- */
+function cycTable(c){var t=today(),h='<h3>Salary cycle (by salary day)</h3><div class="sheet"><table style="min-width:700px"><tr><th>Worker</th><th>Salary day</th><th>Cycle till today</th><th>Days</th><th>Earned</th><th>Advance</th><th>Left</th></tr>';
+if(!c.wrk.length)h+='<tr><td colspan="7" class="r" style="text-align:left">No workers.</td></tr>';
+c.wrk.forEach(function(w){var s=wStmt(c,w,t),sd=sdayOf(w);h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+(sd||'<small class="note">not set</small>')+'</td><td class="r" style="text-align:left">'+esc(dmy(s.cy.s))+' → today<br><small class="note">pay day '+esc(dmy(s.cy.e))+'</small></td><td class="r">'+s.at.days+'</td><td class="r">'+money(s.inc)+'</td><td class="r">'+money(s.adv+s.carry)+'</td><td class="r '+(s.left<0?'neg':'pos')+'"><b>'+money(s.left)+'</b></td></tr>'});
+return h+'</table></div><p class="note">Set each worker’s salary day in the Workers tab. Money taken from the last salary day until the next one is advance and is cut from the salary paid on the salary day. After the salary day a new advance cycle starts. If no salary day is set, the calendar month is used.</p>'}
+
+/* ---- slip search + worker statement ---- */
+function slipRes(c){var q=S.slq.trim().toLowerCase(),a=c.wrk.filter(function(w){return !q||((w.name||'')+' '+(w.phone||'')+' '+(w.role||'')).toLowerCase().indexOf(q)>-1}).slice(0,12);
+if(!c.wrk.length)return '<p class="note">Add workers first.</p>';
+return a.length?a.map(function(w){return '<button class="chip" data-a="wsl" data-id="'+w.id+'">'+esc(w.name||'(no name)')+'<small>'+esc(w.role||'')+'</small></button>'}).join(''):'<p class="note">No worker found.</p>'}
+function slipTab(c){var f=c.wrk.length?payDef(c,c.wrk[0].id):{f:today(),t:today()};
+var h='<h3>Find a worker slip</h3><div class="card"><input id="slq" placeholder="Search a worker name..." value="'+esc(S.slq)+'" autocomplete="off"><div id="slr" style="margin-top:8px">'+slipRes(c)+'</div><p class="note">Tap a name to see how much he has taken, his total income, his presence and how much is left till any date, as a slip.</p></div>';
+h+='<h3>Pay salary and make slip</h3><div class="card"><select id="sw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2" style="margin-top:8px"><div><label>Salary period from</label><input type="date" id="sf" value="'+f.f+'"></div><div><label>Salary period to</label><input type="date" id="st" value="'+f.t+'"></div></div><label class="note" style="margin-top:8px">Payment date</label><input type="date" id="sdt" value="'+today()+'"><button class="btn full" data-a="paysal">Pay salary and make slip</button><p class="note">The period is filled from the worker’s salary day. Advance taken before the salary day is deducted automatically. Advance taken after it stays for the next cycle. The slip shows every advance date by date.</p></div><h3>All slips</h3>';
+var L=c.adv.filter(function(x){return x.k!=='bonus'&&x.k!=='ot'}).sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0});
+if(!L.length)return h+'<p class="note">No slips yet. An advance slip is made when you save an advance or loan.</p>';
+return h+L.map(function(x){var w=c.wrk.filter(function(y){return y.id===x.wid})[0];return '<div class="item" data-a="opsp" data-id="'+x.id+'"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+(x.k==='paid'?'Salary slip · '+esc(x.pf?dmy(x.pf)+' to '+dmy(x.pt):x.m):(x.k==='loan'?'Loan slip':'Advance slip'))+' · '+esc(dmy(x.d))+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join('')}
+function wslDoc(c,w,ref){var t=wStmt(c,w,ref),cy=t.cy,sd=sdayOf(w),at=t.at,
+rows=t.al.map(function(x){return '<tr>'+cell(esc(dmy(x.d)))+cell(esc(x.note||(x.k==='loan'?'Loan':'Advance')))+cell(money(num(x.amt)),1)+'</tr>'});
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>WORKER SLIP</div><div class="rm"><span>Till date: '+esc(dmy(ref))+'</span><span>Salary day: '+(sd||'not set')+'</span></div><div><b>'+esc(w.name||'(no name)')+'</b>'+(w.role?' · '+esc(w.role):'')+(w.phone?' · '+esc(w.phone):'')+'</div><div style="font-size:12px;color:#555">Cycle: '+esc(dmy(cy.s))+' to '+esc(dmy(ref))+' · next pay day '+esc(dmy(cy.e))+(sd?'':' (salary day not set, calendar month used)')+'</div>'
++hd3('Presence in this cycle')+kv([['Present',at.P],['Half day',at.H],['Absent',at.A],['Leave',at.L],['Days counted',at.days,1]])
++hd3('Income in this cycle')+kv([['Salary for days worked',money(at.base)],['Overtime',money(t.ot)],['Bonus',money(t.bn)],['Total income',money(t.inc),1]])
++hd3('Money taken (advance), date by date')+tblh(['Date','Note','>Amount'],rows,'No advance taken in this cycle.')
++kv([['Total taken in this cycle',money(t.adv),1]].concat(t.carry>0.004?[['Earlier advance still to be cut',money(t.carry)]]:[]))
++'<div class="rt"><div class="gt"><span>'+(t.left<0?'Extra advance (cut from coming earnings)':'Left to receive till this date')+'</span><span>'+money(t.left)+'</span></div></div>'
++hd3('All time till '+esc(dmy(ref)))+kv([['Total earned',money(t.allEarn)],['Total advance / loan taken',money(t.allAdv)],['Salary already paid (net)',money(t.paid)],['Balance',money(t.bal),1]])
++'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'}
+function vWsl(){var c=C(),w=c.wrk.filter(function(x){return x.id===S.wslid})[0];if(!w)return '<p class="note">Worker not found.</p>';var ref=S.wsld||today();
+return '<h2>'+esc(w.name||'(no name)')+'</h2><label class="note">Slip till date</label><input type="date" id="wsld" value="'+esc(ref)+'" style="margin-bottom:10px">'+wslDoc(c,w,ref)+'<div class="actions" style="margin-top:10px"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="wsl">Share</button><button class="btn alt" data-a="back">Back</button></div><p class="note">For a PDF, choose “Save as PDF” in the print window, then share the file.</p>'}
+function wslText(c){var w=c.wrk.filter(function(x){return x.id===S.wslid})[0];if(!w)return '';var ref=S.wsld||today(),t=wStmt(c,w,ref);
+return '*'+c.name+'* worker slip\n'+(w.name||'')+' | till '+dmy(ref)+'\nCycle: '+dmy(t.cy.s)+' to '+dmy(ref)+' (pay day '+dmy(t.cy.e)+')\nPresent '+t.at.P+', half '+t.at.H+', absent '+t.at.A+', leave '+t.at.L+'\nIncome: '+money(t.inc)+'\nTaken: '+money(t.adv+t.carry)+'\nLeft: '+money(t.left)}
+
+/* ---- dues with payment history ---- */
+function duesAt(c,d){var L=[];
+function add(k,x,total,who,ref,dt,phone){var pays=x.pays||[],ps=pays.reduce(function(s,p){return s+num(p.amt)},0),init=Math.max(0,num(x.paid)-ps),
+paidTo=init+pays.filter(function(p){return p.d<=d}).reduce(function(s,p){return s+num(p.amt)},0),due=rnd(total-paidTo),rc=pays.filter(function(p){return p.d===d}).reduce(function(s,p){return s+num(p.amt)},0);
+if(dt<=d&&(due>0.004||rc>0))L.push({k:k,who:who,ref:ref,d:dt,total:total,paidTo:paidTo,due:due,rcvd:rc,phone:phone||''})}
+c.sal.forEach(function(x){add('s',x,saleTotal(x),x.cust||'Walk-in customer',x.no,x.d,x.phone)});
+c.rcpt.forEach(function(x){add('r',x,rcptTotal(x),x.cust||'Customer','Receipt '+(x.no||''),x.d,x.phone)});
+(c.due||[]).forEach(function(x){add('m',x,num(x.amt),x.who||'Customer',x.note||'Manual due',x.d,x.phone)});
+return L}
+
+/* ---- date report (white document, printable as PDF) ---- */
+function dayHtml(c,d){
+var i=0,e=0,bal=0;c.led.forEach(function(r){if(r.d===d){i+=num(r.inc);e+=num(r.exp)}if(r.d<=d)bal+=num(r.inc)-num(r.exp)});
+var h='<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>DATE REPORT</div><div class="rm"><span>Date: '+esc(dmy(d))+'</span><span>Printed: '+esc(dmy(today()))+'</span></div>';
+h+=hd3('Money')+kv([['Income',money(i)],['Expense',money(e)],['Net of the day',money(i-e),1],['Balance till this date',money(bal),1]]);
+h+=hd3('Income &amp; expense entries')+tblh(['Note','>Income','>Expense'],c.led.filter(function(r){return r.d===d}).map(function(r){return '<tr>'+cell(esc(r.note||''))+cell(num(r.inc)?money(num(r.inc)):'-',1)+cell(num(r.exp)?money(num(r.exp)):'-',1)+'</tr>'}));
+var ss=c.sal.filter(function(s){return s.d===d}),st=0,sr=0;
+h+=hd3('Sales (invoices)')+tblh(['Invoice','Customer','>Total','>Received','>Due'],ss.map(function(s){var t=saleTotal(s);st+=t;sr+=num(s.paid);return '<tr>'+cell(esc(s.no))+cell(esc(s.cust||'Walk-in'))+cell(money(t),1)+cell(money(num(s.paid)),1)+cell(money(t-num(s.paid)),1)+'</tr>'}));
+if(ss.length)h+=kv([['Total sales',money(st),1],['Received at sale',money(sr)]]);
+var rr=c.rcpt.filter(function(r){return r.d===d});
+if(rr.length)h+=hd3('Money receipts')+tblh(['No','From','>Total','>Received','>Due'],rr.map(function(r){var t=rcptTotal(r);return '<tr>'+cell(esc(r.no))+cell(esc(r.cust||'-'))+cell(money(t),1)+cell(money(num(r.paid)),1)+cell(money(t-num(r.paid)),1)+'</tr>'}));
+var dl=duesAt(c,d),rc=dl.filter(function(x){return x.rcvd>0}),od=dl.filter(function(x){return x.due>0.004}),rt=0,ot=0;
+h+=hd3('Dues received on this date')+tblh(['Customer','Reference','>Received','>Still due'],rc.map(function(x){rt+=x.rcvd;return '<tr>'+cell(esc(x.who))+cell(esc(x.ref))+cell(money(x.rcvd),1)+cell(x.due>0.004?money(x.due):'Cleared',1)+'</tr>'}),'No due payment received on this date.');
+if(rc.length)h+=kv([['Total received',money(rt),1]]);
+h+=hd3('Dues still to receive (till this date)')+tblh(['Customer','Reference','Date','>Total','>Received','>Due','>Days'],od.map(function(x){ot+=x.due;var days=Math.max(0,Math.floor((new Date(d)-new Date(x.d))/86400000));return '<tr>'+cell(esc(x.who)+(x.phone?'<br><small>'+esc(x.phone)+'</small>':''))+cell(esc(x.ref))+cell(esc(dmy(x.d)))+cell(money(x.total),1)+cell(money(x.paidTo),1)+cell(money(x.due),1,1)+cell(days,1)+'</tr>'}),'No dues. Everything is paid.');
+if(od.length)h+=kv([['Total dues to receive',money(ot),1]])+'<p style="font-size:12px;color:#555">A due stays in every report until it is paid. On the day it is paid, the report of that day shows it under “Dues received”.</p>';
+var dr=c.debt.filter(function(r){return r.d===d});
+h+=hd3('Factory debt entries on this date')+tblh(['Supplier','Material','Serial','>Quantity','>Total','>Paid'],dr.map(function(r){return '<tr>'+cell(esc(r.sup||''))+cell(esc(r.item||''))+cell(esc(r.ser||'-'))+cell(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-',1)+cell(money(dTot(r)),1)+cell(money(num(r.paid)),1)+'</tr>'}));
+var sb={};c.debt.forEach(function(r){if(r.d>d)return;var nm=supClean(r.sup)||'(no name)',k=supKey(nm)||'(no name)',o=sb[k]||(sb[k]={n:nm,t:0,p:0});o.t+=dTot(r);o.p+=num(r.paid)});
+var so=Object.keys(sb).map(function(k){return sb[k]}).filter(function(o){return o.t-o.p>0.004}),sot=0;
+h+=hd3('Debt to suppliers (till this date)')+tblh(['Supplier','>Total','>Paid','>Left'],so.map(function(o){sot+=o.t-o.p;return '<tr>'+cell(esc(o.n))+cell(money(o.t),1)+cell(money(o.p),1)+cell(money(o.t-o.p),1,1)+'</tr>'}),'No supplier debt.');
+if(so.length)h+=kv([['Total debt to suppliers',money(sot),1]]);
+var mv=c.mov.filter(function(m){return m.d===d});
+h+=hd3('Stock movements')+tblh(['Item','Type','Serial / batch','>Quantity'],mv.map(function(m){return '<tr>'+cell(esc(m.name))+cell(esc(TYPES[m.type]||m.type))+cell(m.ser?esc(m.ser)+(m.bn?' ('+esc(m.bn)+')':''):'-')+cell((m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit),1)+'</tr>'}));
+var L=lotsOf(c,d),lw=Object.keys(L).filter(function(k){var o=L[k];return o.raws&&o.raws.some(function(m){return m.d===d})||o.batches.some(function(m){return m.d===d})}).sort(serCmp);
+if(lw.length)h+=hd3('Serials worked on this date')+tblh(['Serial','Raw material','>Raw in','>Product made','>Loss'],lw.map(function(k){var o=L[k],s=lotStat(o);return '<tr>'+cell(esc(k))+cell(esc(o.rawName||'-'))+cell(fqn(o.rawQty)+' '+esc(o.rawUnit),1)+cell(Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')||'-',1)+cell(s.loss!=null?fqn(s.loss)+' '+esc(o.rawUnit)+' ('+s.pct.toFixed(1)+'%)':'-',1)+'</tr>'}));
+h+=hd3('Stock at end of this day')+tblh(['Item','>In stock'],c.stk.map(function(it){return '<tr>'+cell(esc(it.name)+(it.kind==='raw'?' <small>(raw)</small>':''))+cell('<b>'+qtyAt(c,it,d)+' '+esc(it.unit)+'</b>',1)+'</tr>'}),'No items.');
+var day=c.att[d]||{},n={P:0,A:0,L:0,H:0};
+h+=hd3('Worker attendance')+tblh(['Worker','Status'],c.wrk.map(function(w){var s=day[w.id];if(s)n[s]++;return '<tr>'+cell(esc(w.name||'(no name)'))+cell({P:'Present',A:'Absent',L:'Leave',H:'Half day'}[s]||'-')+'</tr>'}),'No workers.');
+if(c.wrk.length)h+='<p style="font-size:12px">Present '+n.P+' · Half day '+n.H+' · Absent '+n.A+' · Leave '+n.L+'</p>';
+var av=c.adv.filter(function(x){return x.d===d&&isAdvK(x)}),pdv=c.adv.filter(function(x){return x.d===d&&x.k==='paid'}),nm=function(id){var w=c.wrk.filter(function(x){return x.id===id})[0];return esc(w?w.name:'(removed)')};
+h+=hd3('Advance / loan given to workers')+tblh(['Worker','Note','>Amount'],av.map(function(x){return '<tr>'+cell(nm(x.wid))+cell(esc(x.note||(x.k==='loan'?'Loan':'Advance')))+cell(money(num(x.amt)),1)+'</tr>'}));
+h+=hd3('Salary paid on this date')+tblh(['Worker','Period','>Advance cut','>Net paid'],pdv.map(function(x){return '<tr>'+cell(nm(x.wid))+cell(esc(x.pf?dmy(x.pf)+' to '+dmy(x.pt):x.m))+cell(money(num(x.ded)),1)+cell(money(num(x.net)),1,1)+'</tr>'}));
+return h+'</div>'}
+function dayText(c,d){var i=0,e=0,bal=0;c.led.forEach(function(r){if(r.d===d){i+=num(r.inc);e+=num(r.exp)}if(r.d<=d)bal+=num(r.inc)-num(r.exp)});
+var dl=duesAt(c,d),od=dl.filter(function(x){return x.due>0.004}),rc=dl.filter(function(x){return x.rcvd>0}),t='*'+c.name+'* report '+dmy(d)+'\nIncome: '+money(i)+'\nExpense: '+money(e)+'\nBalance: '+money(bal)+'\nSales: '+money(c.sal.filter(function(s){return s.d===d}).reduce(function(a,s){return a+saleTotal(s)},0));
+if(rc.length)t+='\n\nDues received:\n'+rc.map(function(x){return '- '+x.who+': '+money(x.rcvd)}).join('\n');
+if(od.length)t+='\n\nDues to receive ('+money(od.reduce(function(a,x){return a+x.due},0))+'):\n'+od.slice(0,15).map(function(x){return '- '+x.who+' ('+dmy(x.d)+'): '+money(x.due)}).join('\n');
+var day=c.att[d]||{},n={P:0,A:0,L:0,H:0};c.wrk.forEach(function(w){if(day[w.id])n[day[w.id]]++});
+return t+'\n\nPresent '+n.P+', half '+n.H+', absent '+n.A+', leave '+n.L}
+function vDay(){var c=C(),d=S.rd;
+return '<h2>Date report</h2><input type="date" id="rd" value="'+esc(d)+'" style="margin-bottom:10px">'+dayHtml(c,d)+'<div class="actions" style="margin-top:10px"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="day">Share</button></div><p class="note">Choose “Save as PDF” in the print window to make the PDF, then send or upload it. “Share” sends a short text summary (WhatsApp or any app).</p>'}
+
+/* ---- monthly business summary ---- */
+function biData(c,m){var a=m+'-01',b=mEnd(m),o={m:m,a:a,b:b,inc:0,exp:0,sn:0,st:0,sp:0,rn:0,rt:0,rp:0,dbuy:0,dpaid:0,dout:0,dueRecv:0};
+c.led.forEach(function(r){if(r.d>=a&&r.d<=b){o.inc+=num(r.inc);o.exp+=num(r.exp)}});
+c.sal.forEach(function(s){if(s.d>=a&&s.d<=b){o.sn++;o.st+=saleTotal(s);o.sp+=num(s.paid)}});
+c.rcpt.forEach(function(r){if(r.d>=a&&r.d<=b){o.rn++;o.rt+=rcptTotal(r);o.rp+=num(r.paid)}});
+o.ws=c.wrk.map(function(w){var at=attPeriod(c,w,a,b),ot=sumK(c,w,a,b,'ot'),bn=sumK(c,w,a,b,'bonus'),adv=advList(c,w,a,b).reduce(function(t,x){return t+num(x.amt)},0),
+paid=c.adv.filter(function(x){return x.wid===w.id&&x.k==='paid'&&x.d>=a&&x.d<=b}).reduce(function(t,x){return t+num(x.net)},0);
+return{w:w,at:at,earn:at.base+ot+bn,adv:adv,paid:paid,due:wStmt(c,w,b).bal}});
+o.wDays=0;o.wEarn=0;o.wAdv=0;o.wPaid=0;o.wDue=0;o.ws.forEach(function(x){o.wDays+=x.at.days;o.wEarn+=x.earn;o.wAdv+=x.adv;o.wPaid+=x.paid;o.wDue+=x.due});
+c.debt.forEach(function(r){if(r.d>=a&&r.d<=b){o.dbuy+=dTot(r);o.dpaid+=num(r.paid)}if(r.d<=b)o.dout+=dTot(r)-num(r.paid)});
+o.dueOut=duesAt(c,b).reduce(function(t,x){return t+(x.due>0.004?x.due:0)},0);
+c.sal.concat(c.rcpt,c.due||[]).forEach(function(x){(x.pays||[]).forEach(function(p){if(p.d>=a&&p.d<=b)o.dueRecv+=num(p.amt)})});
+var pu={},ra={},ou={},kg=0,kgPart=false;
+c.mov.forEach(function(mv){if(mv.d<a||mv.d>b)return;var it=item(c,mv.pid),isRaw=it?it.kind==='raw':mv.kd==='raw',u=unitKey(mv.unit);
+if(isRaw){if(isAdd(mv))ra[u]=(ra[u]||0)+mv.delta}
+else if(isAdd(mv)){pu[u]=(pu[u]||0)+mv.delta;var f=fac(mv.unit);if(f)kg+=mv.delta*f;else kgPart=true}
+else if(mv.delta<0)ou[u]=(ou[u]||0)-mv.delta});
+o.pu=pu;o.ra=ra;o.ou=ou;o.kg=kg;o.kgPart=kgPart;
+o.cost=o.exp+(S.bisal?o.wEarn:0);o.cpk=kg>0?o.cost/kg:null;
+var L=lotsOf(c,b);o.lots=Object.keys(L).filter(function(k){var x=L[k];return(x.raws||[]).some(function(r){return r.d>=a})||x.batches.some(function(r){return r.d>=a})}).sort(serCmp).map(function(k){return L[k]});
+return o}
+function unitsTxt(o){var k=Object.keys(o);return k.length?k.map(function(u){return fqn(o[u])+' '+esc(u)}).join(' · '):'-'}
+function biHtml(c,m){var o=biData(c,m),h='<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>MONTHLY BUSINESS SUMMARY</div><div class="rm"><span>Month: '+esc(m)+'</span><span>Printed: '+esc(dmy(today()))+'</span></div>';
+h+=hd3('Workers')+kv([['Total workers',c.wrk.length],['Total days present (half day = 0.5)',fqn(o.wDays)],['Total worker salary earned',money(o.wEarn),1],['Advance / loan given',money(o.wAdv)],['Salary paid (net)',money(o.wPaid)],['Salary balance still to pay (till month end)',money(o.wDue),1]]);
+h+=tblh(['Worker','>Days','>Earned','>Advance','>Paid','>Balance'],o.ws.map(function(x){return '<tr>'+cell(esc(x.w.name||'(no name)'))+cell(fqn(x.at.days),1)+cell(money(x.earn),1)+cell(money(x.adv),1)+cell(money(x.paid),1)+cell(money(x.due),1,1)+'</tr>'}),'No workers.');
+h+=hd3('Income and expense')+kv([['Total monthly income (Accounts)',money(o.inc),1],['Total expenses (Accounts)',money(o.exp),1],['Net (income − expenses)',money(o.inc-o.exp),1]]);
+h+=hd3('Sales')+kv([['Invoices',o.sn],['Sales value',money(o.st)],['Received at sale',money(o.sp)],['Money receipts: '+o.rn,money(o.rt)]]);
+h+=hd3('Debt and dues')+kv([['Bought on debt this month',money(o.dbuy)],['Paid to suppliers this month',money(o.dpaid)],['Debt to suppliers (till month end)',money(o.dout),1],['Dues received this month',money(o.dueRecv)],['Dues still to receive (month end)',money(o.dueOut),1]]);
+h+=hd3('Production and raw material')+kv([['Raw material received',unitsTxt(o.ra)],['Product made',unitsTxt(o.pu),1],['Sold / stock out',unitsTxt(o.ou)]]);
+if(o.lots.length)h+=tblh(['Serial','Raw material','>Raw in','>Product made','>Loss'],o.lots.map(function(x){var s=lotStat(x);return '<tr>'+cell(esc(x.ser))+cell(esc(x.rawName||'-'))+cell(fqn(x.rawQty)+' '+esc(x.rawUnit),1)+cell(Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')||'-',1)+cell(s.loss!=null?fqn(s.loss)+' '+esc(x.rawUnit)+' ('+s.pct.toFixed(1)+'%)':'-',1)+'</tr>'}));
+h+=hd3('Costing')+kv([['Expenses (Accounts)',money(o.exp)],['Worker salary earned',S.bisal?money(o.wEarn):'left out'],['Total cost',money(o.cost),1],['Total product made (in kg)',o.kg>0?fqn(o.kg)+' kg'+(o.kgPart?' (units other than kg/ton not counted)':''):'-'],['Cost per kg of product',o.cpk!=null?money(o.cpk):'-',1],['Profit (income − total cost)',money(o.inc-o.cost),1]]);
+return h+'<p style="font-size:12px;color:#555">If you already enter salary payments as an expense in Accounts, leave worker salary out of the cost (button below) so it is not counted twice.</p></div>'}
+function biText(c){var m=S.bim||today().slice(0,7),o=biData(c,m);return '*'+c.name+'* summary '+m+'\nWorkers: '+c.wrk.length+' | salary earned '+money(o.wEarn)+'\nIncome: '+money(o.inc)+'\nExpenses: '+money(o.exp)+'\nSales: '+money(o.st)+'\nDebt to suppliers: '+money(o.dout)+'\nDues to receive: '+money(o.dueOut)+'\nProduct made: '+unitsTxt(o.pu).replace(/&amp;/g,'&')+(o.cpk!=null?'\nCost per kg: '+money(o.cpk):'')}
+function vBi(){var c=C(),m=S.bim||today().slice(0,7),t=today().slice(0,7),pv=new Date(+t.slice(0,4),+t.slice(5,7)-2,1),pm=pv.getFullYear()+'-'+pad2(pv.getMonth()+1),ex={},inc={},top={};
 c.led.forEach(function(r){var k=r.d.slice(0,7);ex[k]=(ex[k]||0)+num(r.exp);inc[k]=(inc[k]||0)+num(r.inc)});
 c.sal.forEach(function(s){s.lines.forEach(function(l){top[l.name]=(top[l.name]||0)+l.qty*l.price})});
 var ch=function(a,b){return b?((a-b)/b*100).toFixed(1)+'%':'-'},tp=Object.keys(top).sort(function(a,b){return top[b]-top[a]}).slice(0,5);
-return '<h2>Business insights</h2><div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Expense this month</small><b class="neg">'+money(ex[m]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(ex[m]||0,ex[pm])+'</b></div><div class="tile"><small>Income this month</small><b class="pos">'+money(inc[m]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(inc[m]||0,inc[pm])+'</b></div></div><h3>Top selling products (by sales value)</h3>'+(tp.length?tp.map(function(k){return '<div class="item"><b>'+esc(k)+'</b><b>'+money(top[k])+'</b></div>'}).join(''):'<p class="note">No sales yet.</p>')+'<h3>Last 6 months</h3><div class="sheet"><table><tr><th>Month</th><th>Income</th><th>Expense</th><th>Net</th></tr>'+Object.keys(ex).concat(Object.keys(inc)).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse().slice(0,6).map(function(k){return '<tr><td>'+k+'</td><td class="r">'+money(inc[k]||0)+'</td><td class="r">'+money(ex[k]||0)+'</td><td class="r"><b>'+money((inc[k]||0)-(ex[k]||0))+'</b></td></tr>'}).join('')+'</table></div><p class="note">Profit per product needs a cost price on each item, which is not stored yet.</p>'}
+return '<h2>Business insights</h2><label class="note">Month</label><input type="month" id="bim" value="'+esc(m)+'" style="margin-bottom:10px">'+biHtml(c,m)
++'<div class="actions" style="margin:10px 0"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="bi">Share summary</button><button class="btn alt" data-a="bisaltg">'+(S.bisal?'Leave worker salary out of cost':'Include worker salary in cost')+'</button></div>'
++'<h3>Trends</h3><div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Expense this month</small><b class="neg">'+money(ex[t]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(ex[t]||0,ex[pm])+'</b></div><div class="tile"><small>Income this month</small><b class="pos">'+money(inc[t]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(inc[t]||0,inc[pm])+'</b></div></div><h3>Top selling products (by sales value)</h3>'+(tp.length?tp.map(function(k){return '<div class="item"><b>'+esc(k)+'</b><b>'+money(top[k])+'</b></div>'}).join(''):'<p class="note">No sales yet.</p>')+'<h3>Last 6 months</h3><div class="sheet"><table><tr><th>Month</th><th>Income</th><th>Expense</th><th>Net</th></tr>'+Object.keys(ex).concat(Object.keys(inc)).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse().slice(0,6).map(function(k){return '<tr><td>'+k+'</td><td class="r">'+money(inc[k]||0)+'</td><td class="r">'+money(ex[k]||0)+'</td><td class="r"><b>'+money((inc[k]||0)-(ex[k]||0))+'</b></td></tr>'}).join('')+'</table></div>'}
 
-function slipTab(c){var h='<h3>Pay salary and make slip</h3><div class="card"><select id="sw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2" style="margin-top:8px"><div><label>Month</label><input type="month" id="sm" value="'+today().slice(0,7)+'"></div><div><label>Payment date</label><input type="date" id="sdt" value="'+today()+'"></div></div><button class="btn full" data-a="paysal">Pay salary and make slip</button><p class="note">Pending advances are deducted automatically. The slip shows every advance date by date.</p></div><h3>All slips</h3>',L=c.adv.filter(function(x){return x.k!=='bonus'&&x.k!=='ot'}).sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0});
-if(!L.length)return h+'<p class="note">No slips yet. An advance slip is made when you save an advance or loan.</p>';
-return h+L.map(function(x){var w=c.wrk.filter(function(y){return y.id===x.wid})[0];return '<div class="item" data-a="opsp" data-id="'+x.id+'"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+(x.k==='paid'?'Salary slip · '+esc(x.m):(x.k==='loan'?'Loan slip':'Advance slip'))+' · '+esc(dmy(x.d))+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join('')}
+/* ---- serial numbers: raw material lots and the products made from them ---- */
+var FAC={kg:1,kgs:1,kilo:1,kilogram:1,'কেজি':1,ton:1000,tons:1000,tonne:1000,tonnes:1000,mt:1000,'টন':1000};
+function fac(u){return FAC[String(u||'').trim().toLowerCase()]||0}
+function conv(q,fu,tu){if(unitKey(fu)===unitKey(tu))return q;var a=fac(fu),b=fac(tu);return(a&&b)?q*a/b:null}
+function serCmp(a,b){var x=parseFloat(a),y=parseFloat(b);if(!isNaN(x)&&!isNaN(y)&&x!==y)return x-y;return a<b?-1:a>b?1:0}
+function lotsOf(c,upto){var L={};
+c.mov.forEach(function(m){if(!m.ser||(upto&&m.d>upto))return;var k=String(m.ser),o=L[k]||(L[k]={ser:k,rawQty:0,rawUnit:'',rawName:'',d:'',raws:[],batches:[]});
+if(m.kd==='raw'){if(m.type==='in'||m.type==='open'){o.rawQty+=num(m.delta);o.rawUnit=o.rawUnit||m.unit;o.rawName=o.rawName||m.name;o.d=(!o.d||m.d<o.d)?m.d:o.d;o.raws.push(m)}}
+else if(m.kd==='product'&&isAdd(m))o.batches.push(m)});
+return L}
+function lotStat(o){var used=0,prodIn=0,unk=false,pt={},allRu=o.batches.length>0;
+o.batches.forEach(function(m){var ru=num(m.ru);used+=ru;if(!(ru>0))allRu=false;var v=conv(num(m.delta),m.unit,o.rawUnit||m.unit);if(v==null)unk=true;else prodIn+=v;pt[m.unit]=(pt[m.unit]||0)+num(m.delta)});
+var base=allRu?used:o.rawQty,r={used:used,left:Math.max(0,o.rawQty-used),prodTxt:pt,allRu:allRu,base:base,prod:unk?null:prodIn,loss:null,pct:0,unk:unk};
+if(!unk&&o.batches.length&&base>0){r.loss=base-prodIn;r.pct=r.loss/base*100}return r}
+function lotLine(o,s){if(!o.batches.length)return 'No product made yet';return 'Product made: '+Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')+(s.loss!=null?' · Loss '+fqn(s.loss)+' '+esc(o.rawUnit)+' ('+s.pct.toFixed(1)+'%)':'')}
+function nextSer(c){var mx=0;function t(v){var s=String(v==null?'':v).trim();if(/^\d+$/.test(s))mx=Math.max(mx,parseInt(s,10))}c.mov.forEach(function(m){t(m.ser)});c.debt.forEach(function(r){t(r.ser)});return mx+1}
+/* read the serial controls on a stock card; returns extra movement fields, or false to stop */
+function serPick(c,it){
+if(it.kind==='raw'){var el=$('ser-'+it.id),ser=bn2en(el?el.value:'').trim();if(!ser)ser=String(nextSer(c));
+var L=lotsOf(c),ex=L[ser];if(ex&&ex.rawName&&supKey(ex.rawName)!==supKey(it.name)){toast('Serial '+ser+' is already used for '+ex.rawName);return false}
+return{ser:ser,kd:'raw'}}
+var sel=$('psr-'+it.id),val=sel?sel.value:'',has=Object.keys(lotsOf(c)).length>0;
+if(!val){if(has){toast('Choose the raw material serial this product was made from, or “No serial”');return false}return{kd:'product'}}
+if(val==='-')return{kd:'product'};
+var lot=lotsOf(c)[val],ru=num(($('pru-'+it.id)||{}).value),x={ser:val,kd:'product',bn:val+'-'+((lot?lot.batches.length:0)+1)};
+if(ru>0)x.ru=ru;return x}
+function serBox(c,i){
+if(i.kind==='raw')return '<div class="g2" style="margin-top:8px"><div><label>Serial no. (blank = next: '+nextSer(c)+')</label><input id="ser-'+i.id+'" placeholder="'+nextSer(c)+'" autocomplete="off"></div><div class="note" style="padding-top:18px">Each raw material lot gets its own serial. Products made from it use the same serial.</div></div>';
+var L=lotsOf(c),ks=Object.keys(L).sort(serCmp).reverse();
+return '<div class="g2" style="margin-top:8px"><div><label>Made from raw serial</label><select id="psr-'+i.id+'"><option value="">Choose serial…</option>'+ks.map(function(k){var o=L[k],s=lotStat(o);return '<option value="'+esc(k)+'">'+esc(k)+' · '+esc(o.rawName)+' ('+fqn(s.left)+' '+esc(o.rawUnit)+' not used yet)</option>'}).join('')+'<option value="-">No serial (old stock)</option></select></div><div><label>Raw used for this batch (optional)</label><input type="number" inputmode="decimal" id="pru-'+i.id+'" placeholder="in the lot’s unit"></div></div>'}
+function serTab(){var c=C();return '<input id="serq" placeholder="Search serial or raw material..." value="'+esc(S.serq)+'" autocomplete="off"><div id="serl" style="margin-top:10px">'+serList(c)+'</div><p class="note">Tap a serial to see the raw material received and every product batch made from it. Loss = raw material − product made, worked out per serial.</p>'}
+function serList(c){var L=lotsOf(c),q=S.serq.trim().toLowerCase(),ks=Object.keys(L).filter(function(k){return !q||(k+' '+L[k].rawName).toLowerCase().indexOf(q)>-1}).sort(serCmp).reverse();
+if(!ks.length)return '<p class="note">'+(Object.keys(L).length?'No serial matches.':'No serial numbers yet. Add raw material in the Stock tab; every entry gets a serial.')+'</p>';
+return ks.map(function(k){var o=L[k],s=lotStat(o);return '<div class="card" data-a="lotop" data-ser="'+esc(k)+'" style="cursor:pointer"><div class="top"><b class="nm">Serial '+esc(k)+'</b><span class="note">'+esc(dmy(o.d))+'</span></div><div>'+esc(o.rawName)+': '+fqn(o.rawQty)+' '+esc(o.rawUnit)+'</div><div class="note">'+lotLine(o,s)+'</div></div>'}).join('')}
+/* stock of one product split by serial; sold / out is taken from the oldest serial first (FIFO) */
+function serStock(c,it){var adds=[],leg=legacy(c,it),outs=0;
+if(leg>0)adds.push({ser:'',d:'0000-00-00',q:leg,i:-1});
+c.mov.forEach(function(m,i){if(m.pid!==it.id)return;if(isAdd(m))adds.push({ser:m.ser?String(m.ser):'',d:m.d,q:num(m.delta),i:i});else if(m.delta<0)outs-=m.delta});
+adds.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:a.i-b.i});
+var res={};adds.forEach(function(a){var k=a.ser||'—',o=res[k]||(res[k]={ser:a.ser,made:0,rem:0,first:a.d,n:0});o.made+=a.q;o.n++;var take=Math.min(a.q,Math.max(0,outs));outs-=take;o.rem+=a.q-take});
+Object.keys(res).forEach(function(k){res[k].rem=Math.round(res[k].rem*1e6)/1e6});return res}
+function vSd(){var c=C(),it=item(c,S.sdid);if(!it)return '<p class="note">Item not found.</p>';
+var ss=serStock(c,it),L=lotsOf(c),ks=Object.keys(ss).sort(function(a,b){if(a==='—')return -1;if(b==='—')return 1;return serCmp(b,a)});
+var rows=ks.map(function(k){var s=ss[k],o=L[k];return '<tr><td class="r" style="text-align:left">'+(s.ser?'<button class="lk" data-a="lotop" data-ser="'+esc(k)+'">'+esc(k)+'</button>':'<small class="note">No serial / earlier stock</small>')+'</td><td class="r" style="text-align:left">'+(o?esc(o.rawName):'-')+'</td><td class="r">'+(s.first>'0001'?esc(dmy(s.first)):'-')+'</td><td class="r">'+fqn(s.made)+'</td><td class="r"><b>'+fqn(s.rem)+' '+esc(it.unit)+'</b></td></tr>'}).join('');
+var bs=c.mov.map(function(m,i){return{m:m,i:i}}).filter(function(x){return x.m.pid===it.id&&isAdd(x.m)}).sort(function(a,b){return a.m.d<b.m.d?1:a.m.d>b.m.d?-1:b.i-a.i});
+return '<h2>'+esc(it.name)+'</h2><div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Total in stock</small><b>'+fqn(num(it.qty))+' '+esc(it.unit)+'</b></div><div class="tile"><small>Serials</small><b>'+ks.filter(function(k){return k!=='—'}).length+'</b></div></div>'
++'<h3>Stock by raw material serial</h3><div class="sheet"><table style="min-width:520px"><tr><th>Serial</th><th>Raw material</th><th>First made</th><th>Made</th><th>In stock</th></tr>'+(rows||'<tr><td colspan="5" class="r" style="text-align:left">No stock yet.</td></tr>')+'</table></div><p class="note">Sold or stock-out quantity is taken from the oldest serial first.</p>'
++'<h3>Every production entry</h3><div class="sheet"><table style="min-width:560px"><tr><th>Date</th><th>Serial</th><th>Batch</th><th>Quantity</th><th>Raw used</th></tr>'+(bs.map(function(x){var m=x.m,o=m.ser?L[String(m.ser)]:null;return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+(m.ser?esc(m.ser):'-')+'</td><td class="r">'+(m.bn?esc(m.bn):'-')+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(m.unit)+'</td><td class="r">'+(num(m.ru)>0&&o?fqn(m.ru)+' '+esc(o.rawUnit):'-')+'</td></tr>'}).join('')||'<tr><td colspan="5" class="r" style="text-align:left">No entries.</td></tr>')+'</table></div>'}
+function vLot(){var c=C(),L=lotsOf(c),o=L[S.lot];if(!o)return '<p class="note">Serial not found.</p>';var s=lotStat(o),sup='';
+c.debt.forEach(function(r){if(String(r.ser||'').trim()===o.ser&&r.sup&&!sup)sup=supClean(r.sup)});
+var bs=o.batches.slice().sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0}),pids={};bs.forEach(function(m){pids[m.pid]=1});
+var left=Object.keys(pids).map(function(id){var it=item(c,id);if(!it)return '';var x=serStock(c,it)[o.ser];return x?'<div class="item"><b>'+esc(it.name)+'</b><b>'+fqn(x.rem)+' '+esc(it.unit)+' <small class="note">of '+fqn(x.made)+' made</small></b></div>':''}).join('');
+return '<h2>Serial '+esc(o.ser)+'</h2><div class="card"><b>'+esc(o.rawName)+'</b><br><small class="note">Received '+esc(dmy(o.d))+(sup?' · Supplier '+esc(sup):'')+'</small></div>'
++'<div class="tiles"><div class="tile"><small>Raw in</small><b>'+fqn(o.rawQty)+' '+esc(o.rawUnit)+'</b></div><div class="tile"><small>Product made</small><b class="pos">'+(Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')||'0')+'</b></div><div class="tile"><small>Loss</small><b class="'+(s.loss!=null&&s.loss>0?'neg':'')+'">'+(s.loss!=null?fqn(s.loss)+' '+esc(o.rawUnit)+'<br><small>'+s.pct.toFixed(1)+'%</small>':'-')+'</b></div></div>'
++'<p class="note">'+(!o.batches.length?'No product made from this serial yet.':s.unk?'Loss cannot be worked out because the product unit cannot be converted to the raw material unit (use kg or ton).':s.allRu?'Loss is worked out on the raw material actually used ('+fqn(s.used)+' '+esc(o.rawUnit)+'). Not used yet: '+fqn(s.left)+' '+esc(o.rawUnit)+'.':'Loss is worked out on the whole lot ('+fqn(o.rawQty)+' '+esc(o.rawUnit)+'). If you enter “raw used” on each production entry, it is worked out on what was really used.')+'</p>'
++'<h3>Raw material received</h3><div class="sheet"><table style="min-width:360px"><tr><th>Date</th><th>Quantity</th></tr>'+o.raws.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+fqn(m.delta)+' '+esc(m.unit)+'</td></tr>'}).join('')+'</table></div>'
++'<h3>Product made from this serial</h3><div class="sheet"><table style="min-width:520px"><tr><th>Date</th><th>Batch</th><th>Product</th><th>Quantity</th><th>Raw used</th><th>Yield</th></tr>'+(bs.map(function(m){var it=item(c,m.pid),ru=num(m.ru),v=ru>0?conv(num(m.delta),m.unit,o.rawUnit):null;return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+esc(m.bn||'-')+'</td><td class="r" style="text-align:left">'+esc(it?it.name:m.name)+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(m.unit)+'</td><td class="r">'+(ru>0?fqn(ru)+' '+esc(o.rawUnit):'-')+'</td><td class="r">'+(v!=null?(v/ru*100).toFixed(1)+'%':'-')+'</td></tr>'}).join('')||'<tr><td colspan="6" class="r" style="text-align:left">None yet.</td></tr>')+'</table></div>'
++(left?'<h3>Still in stock from this serial</h3>'+left+'<p class="note">Sold / stock-out quantity is taken from the oldest serial first.</p>':'')}
+
+/* ---- salary slips (advance and salary) ---- */
 function paidOf(c,id){return c.adv.reduce(function(t,a){return t+(a.wid===id&&a.k==='paid'?num(a.net):0)},0)}
-function vSps(){var c=C(),r=c.adv.filter(function(x){return x.id===S.sp})[0];if(!r)return '<p class="note">Slip not found.</p>';var w=c.wrk.filter(function(x){return x.id===r.wid})[0]||{name:'(removed)'},wn='<div><b>'+esc(w.name)+'</b>'+(w.role?' · '+esc(w.role):'')+'</div>',out=c.adv.filter(function(a){return a.wid===r.wid&&a.k!=='bonus'&&a.k!=='ot'&&a.k!=='paid'&&!a.s}).reduce(function(t,a){return t+num(a.amt)-num(a.dd)},0),
+function vSps(){var c=C(),r=c.adv.filter(function(x){return x.id===S.sp})[0];if(!r)return '<p class="note">Slip not found.</p>';
+var w=c.wrk.filter(function(x){return x.id===r.wid})[0]||{name:'(removed)'},wn='<div><b>'+esc(w.name)+'</b>'+(w.role?' · '+esc(w.role):'')+'</div>',
+out=c.adv.filter(function(a){return a.wid===r.wid&&isAdvK(a)&&!a.s}).reduce(function(t,a){return t+num(a.amt)-num(a.dd)},0),
 act='<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="back">Back</button><button class="btn alt" data-a="delsp">Delete slip</button></div>';
-if(r.k!=='paid')return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>'+(r.k==='loan'?'LOAN':'ADVANCE')+' SLIP</div><div class="rm"><span>Date: '+esc(dmy(r.d))+'</span></div>'+wn+'<table><tr><td>Amount given</td><td class="r"><b>'+money(num(r.amt))+'</b></td></tr><tr><td>Total advance and loan taken so far</td><td class="r">'+money(advOf(c,r.wid))+'</td></tr><tr><td>To be deducted from salary</td><td class="r">'+money(out)+'</td></tr></table>'+(r.note?'<p style="font-size:12px">Note: '+esc(r.note)+'</p>':'')+'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act;
-var L=c.adv.filter(function(a){return a.wid===r.wid&&a.k!=='bonus'&&a.k!=='ot'&&a.k!=='paid'}).sort(function(a,b){return a.d<b.d?-1:1}),rows=L.map(function(a){var pn=r.parts&&r.parts[a.id],st=pn!=null?(a.s&&a.p===r.id?'Deducted now':'Part deducted now: '+money(pn)):(r.ids.indexOf(a.id)>-1?'Deducted now':(a.s?'Deducted earlier':(num(a.dd)>0?'Part deducted earlier':'Pending')));return '<tr><td>'+esc(dmy(a.d))+'</td><td>'+esc(a.note||(a.k==='loan'?'Loan':'Advance'))+'</td><td class="r">'+money(num(a.amt))+'</td><td>'+st+'</td></tr>'}).join('');
-return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>SALARY SLIP, '+esc(r.m)+'</div><div class="rm"><span>Paid on: '+esc(dmy(r.d))+'</span></div>'+wn+'<table><tr><td>Days present / half day</td><td class="r">'+r.pd+' / '+r.hd+'</td></tr><tr><td>Monthly salary</td><td class="r">'+money(num(w.wage))+'</td></tr><tr><td>Salary for days worked</td><td class="r">'+money(r.base)+'</td></tr><tr><td>Overtime</td><td class="r">'+money(r.ot)+'</td></tr><tr><td>Bonus</td><td class="r">'+money(r.bonus)+'</td></tr><tr><td><b>Total salary</b></td><td class="r"><b>'+money(r.base+r.ot+r.bonus)+'</b></td></tr><tr><td>Advance deducted</td><td class="r">−'+money(r.ded)+'</td></tr></table><div class="rt"><div class="gt"><span>Net received</span><span>'+money(r.net)+'</span></div></div><h3 style="font-size:13px;margin:12px 0 4px">Advance history, date by date</h3>'+(rows?'<table><tr><th>Date</th><th>Note</th><th class="r">Amount</th><th>Status</th></tr>'+rows+'</table>':'<p style="font-size:12px">No advances.</p>')+'<p style="font-size:12px">Advance still pending after this payment: '+money(out)+'</p><p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act}
+if(r.k!=='paid'){var t=wStmt(c,w,r.d),cy=t.cy,sd=sdayOf(w);
+var rows=t.al.map(function(a){return '<tr>'+cell(esc(dmy(a.d)))+cell(esc(a.note||(a.k==='loan'?'Loan':'Advance')))+cell(a.id===r.id?'<b>'+money(num(a.amt))+'</b>':money(num(a.amt)),1)+'</tr>'});
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>'+(r.k==='loan'?'LOAN':'ADVANCE')+' SLIP</div><div class="rm"><span>Date given: '+esc(dmy(r.d))+'</span><span>Amount: '+money(num(r.amt))+'</span></div>'+wn
++'<div style="font-size:12px;color:#555">'+(sd?'Salary day: '+sd+' of every month':'Salary day not set (calendar month)')+' · Cycle '+esc(dmy(cy.s))+' to '+esc(dmy(r.d))+' · next pay day '+esc(dmy(cy.e))+'</div>'
++hd3('Money taken in this cycle, date by date')+tblh(['Date','Note','>Amount'],rows)
++kv([['Total taken in this cycle',money(t.adv),1]].concat(t.carry>0.004?[['Earlier advance still to be cut',money(t.carry)]]:[]).concat([['Salary earned in this cycle till '+esc(dmy(r.d)),money(t.inc)],['Left to receive after advance',money(t.left),1],['To be deducted from salary on pay day',money(out)]]))
++(r.note?'<p style="font-size:12px">Note: '+esc(r.note)+'</p>':'')+'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act}
+var L=c.adv.filter(function(a){return a.wid===r.wid&&isAdvK(a)}).sort(function(a,b){return a.d<b.d?-1:1}),
+rows2=L.map(function(a){var pn=r.parts&&r.parts[a.id],st=pn!=null?(a.s&&a.p===r.id?'Deducted now':'Part deducted now: '+money(pn)):(r.ids.indexOf(a.id)>-1?'Deducted now':(a.s?'Deducted earlier':(num(a.dd)>0?'Part deducted earlier':'Pending')));return '<tr><td>'+esc(dmy(a.d))+'</td><td>'+esc(a.note||(a.k==='loan'?'Loan':'Advance'))+'</td><td class="r">'+money(num(a.amt))+'</td><td>'+st+'</td></tr>'}).join('');
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>SALARY SLIP, '+esc(r.pf?dmy(r.pf)+' to '+dmy(r.pt):r.m)+'</div><div class="rm"><span>Paid on: '+esc(dmy(r.d))+'</span>'+(sdayOf(w)?'<span>Salary day: '+sdayOf(w)+'</span>':'')+'</div>'+wn+'<table><tr><td>Days present / half day</td><td class="r">'+r.pd+' / '+r.hd+'</td></tr><tr><td>Monthly salary</td><td class="r">'+money(num(w.wage))+'</td></tr><tr><td>Salary for days worked</td><td class="r">'+money(r.base)+'</td></tr><tr><td>Overtime</td><td class="r">'+money(r.ot)+'</td></tr><tr><td>Bonus</td><td class="r">'+money(r.bonus)+'</td></tr><tr><td><b>Total salary</b></td><td class="r"><b>'+money(r.base+r.ot+r.bonus)+'</b></td></tr><tr><td>Advance deducted</td><td class="r">−'+money(r.ded)+'</td></tr></table><div class="rt"><div class="gt"><span>Net received</span><span>'+money(r.net)+'</span></div></div><h3 style="font-size:13px;margin:12px 0 4px">Advance history, date by date</h3>'+(rows2?'<table><tr><th>Date</th><th>Note</th><th class="r">Amount</th><th>Status</th></tr>'+rows2+'</table>':'<p style="font-size:12px">No advances.</p>')+'<p style="font-size:12px">Advance still pending after this payment: '+money(out)+'</p><p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act}
 
 lockShow();
 if(CLOUDMODE){startCloud()}else{render()}
