@@ -797,8 +797,8 @@ else if(a==='delsp'){var r0=c.adv.filter(function(x){return x.id===S.sp})[0];if(
 if(!confirm('Delete this slip?'))return;if(r0.k==='paid')c.adv.forEach(function(x){if(r0.parts&&r0.parts[x.id]!=null){x.dd=Math.round((num(x.dd)-r0.parts[x.id])*100)/100;if(x.dd<=0.004)delete x.dd;delete x.s;if(x.p===r0.id)delete x.p}else if(x.p===r0.id){delete x.s;delete x.p}});c.adv=c.adv.filter(function(x){return x.id!==r0.id});save();S.v='wrk';S.wtab='slip';render()}
 else if(a==='paysal'){var w3=$('sw').value,f3=$('sf').value,t3=$('st').value,d3=$('sdt').value||today(),wk3=c.wrk.filter(function(x){return x.id===w3})[0];
 if(!wk3||!f3||!t3||t3<f3){toast('Choose a worker and the salary period (from, to)');return}
-var at3=attPeriod(c,wk3,f3,t3),base=at3.base,ot3=sumK(c,wk3,f3,t3,'ot'),bn3=sumK(c,wk3,f3,t3,'bonus'),gross=base+ot3+bn3,lim=sdayOf(wk3)?t3:d3,
-pend=c.adv.filter(function(x){return x.wid===w3&&isAdvK(x)&&!x.s&&x.d<=lim}).sort(function(x,y){return x.d<y.d?-1:1}),ids=[],ded=0,parts={};
+var at3=attPeriod(c,wk3,f3,t3),base=at3.base,ot3=sumK(c,wk3,f3,t3,'ot'),bn3=sumK(c,wk3,f3,t3,'bonus'),gross=base+ot3+bn3,
+pend=c.adv.filter(function(x){return x.wid===w3&&isAdvK(x)&&!x.s&&x.d<=d3}).sort(function(x,y){return x.d<y.d?-1:1}),ids=[],ded=0,parts={};
 pend.forEach(function(x){var left=Math.round((num(x.amt)-num(x.dd))*100)/100,take=Math.min(left,Math.max(0,gross-ded));if(take>0.004){ded+=take;ids.push(x.id);parts[x.id]=take}});
 ded=rnd(ded);var net=rnd(gross-ded);
 if(c.adv.some(function(x){return x.k==='paid'&&x.wid===w3&&x.pf===f3&&x.pt===t3})&&!confirm('A salary slip for this period already exists. Make another?'))return;
@@ -1196,25 +1196,27 @@ function fqn(n){return Math.round(num(n)*1000)/1000}
 function addDays(d,n){var t=new Date(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10)+n);return t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate())}
 function mEnd(m){return m+'-'+pad2(daysIn(m))}
 function sdayOf(w){var n=Math.round(num(w&&w.sday));return(n>=1&&n<=31)?n:0}
-function sdIn(sd,y,m){while(m<1){m+=12;y--}while(m>12){m-=12;y++}var ym=y+'-'+pad2(m);return ym+'-'+pad2(Math.min(sd,daysIn(ym)))}
-/* salary cycle that contains date ref: s = last salary day, e = next salary day (pay day) */
-function cyc(w,ref){var sd=sdayOf(w)||1,y=+ref.slice(0,4),m=+ref.slice(5,7),s=sdIn(sd,y,m);if(ref<s){m--;if(m<1){m=12;y--}s=sdIn(sd,y,m)}var sy=+s.slice(0,4),sm=+s.slice(5,7);return{s:s,e:sdIn(sd,sy,sm+1)}}
 function isAdvK(x){return x.k!=='bonus'&&x.k!=='ot'&&x.k!=='paid'}
+/* earning calculation is always a plain calendar period (normally one full month), never a sliding window */
 function attPeriod(c,w,a,b){var o={P:0,H:0,A:0,L:0,days:0,base:0};Object.keys(c.att).forEach(function(k){if(k<a||k>b)return;var s=c.att[k][w.id];if(!s)return;o[s]++;var f=s==='P'?1:s==='H'?.5:0;o.days+=f;o.base+=f*num(w.wage)/daysIn(k.slice(0,7))});o.base=rnd(o.base);return o}
 function sumK(c,w,a,b,kind){return c.adv.filter(function(x){return x.wid===w.id&&x.k===kind&&x.d>=a&&x.d<=b}).reduce(function(t,x){return t+num(x.amt)},0)}
-function advList(c,w,a,b){return c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d>=a&&x.d<=b}).sort(function(x,y){return x.d<y.d?-1:x.d>y.d?1:0})}
+function sumAdv(c,w,a,b){return c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d>=a&&x.d<=b}).reduce(function(t,x){return t+num(x.amt)},0)}
+/* cumulative ledger up to any date, same arithmetic as earned()/advOf()/paidOf() but as of ref instead of today */
 function earnedTo(c,w,ref){var e=0,dd=0;Object.keys(c.att).forEach(function(k){if(k>ref)return;var s=c.att[k][w.id];if(!s)return;var f=s==='P'?1:s==='H'?.5:0;dd+=f;e+=f*num(w.wage)/daysIn(k.slice(0,7))});c.adv.forEach(function(a){if(a.wid===w.id&&a.d<=ref&&(a.k==='bonus'||a.k==='ot'))e+=num(a.amt)});return{days:dd,earn:e}}
-function wStmt(c,w,ref){var cy=cyc(w,ref),at=attPeriod(c,w,cy.s,ref),ot=sumK(c,w,cy.s,ref,'ot'),bn=sumK(c,w,cy.s,ref,'bonus'),al=advList(c,w,cy.s,ref),
-adv=al.reduce(function(t,x){return t+num(x.amt)},0),
-carry=c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&!x.s&&x.d<cy.s}).reduce(function(t,x){return t+num(x.amt)-num(x.dd)},0),
-inc=at.base+ot+bn,all=earnedTo(c,w,ref),
-aa=c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d<=ref}).reduce(function(t,x){return t+num(x.amt)},0),
-pd=c.adv.filter(function(x){return x.wid===w.id&&x.k==='paid'&&x.d<=ref}).reduce(function(t,x){return t+num(x.net)},0);
-return{cy:cy,at:at,ot:ot,bn:bn,al:al,adv:adv,carry:carry,inc:inc,left:rnd(inc-adv-carry),allEarn:all.earn,allDays:all.days,allAdv:aa,paid:pd,bal:rnd(all.earn-aa-pd)}}
-/* default salary period for the pay form: last finished cycle (or this month when no salary day) */
-function payDef(c,wid){var w=c.wrk.filter(function(x){return x.id===wid})[0],t=today();
-if(w&&sdayOf(w)){var cy=cyc(w,t),pv=cyc(w,addDays(cy.s,-1));return{f:pv.s,t:addDays(cy.s,-1)}}
-var m=t.slice(0,7);return{f:m+'-01',t:mEnd(m)}}
+function advOfTo(c,w,ref){return c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d<=ref}).reduce(function(t,x){return t+num(x.amt)},0)}
+function paidOfTo(c,w,ref){return c.adv.filter(function(x){return x.wid===w.id&&x.k==='paid'&&x.d<=ref}).reduce(function(t,x){return t+num(x.net)},0)}
+function advListTo(c,w,ref){return c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d<=ref}).sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0})}
+/* full picture for one worker as of any date: all-time earned, all-time advance taken, all-time net salary paid, and what is still pending (not yet cut from a salary) */
+function allTime(c,w,ref){var at=attPeriod(c,w,'0000-01-01',ref),e=earnedTo(c,w,ref),adv=advOfTo(c,w,ref),paid=paidOfTo(c,w,ref),
+out=c.adv.filter(function(x){return x.wid===w.id&&isAdvK(x)&&x.d<=ref&&!x.s}).sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0}),
+outAmt=rnd(out.reduce(function(t,x){return t+num(x.amt)-num(x.dd||0)},0));
+return{at:at,earn:e.earn,adv:adv,paid:paid,bal:rnd(e.earn-adv-paid),out:out,outAmt:outAmt}}
+/* default salary period for the pay form: the calendar month right after the last paid period, or the previous (or current) month when nothing has been paid yet */
+function payDef(c,wid){var w=c.wrk.filter(function(x){return x.id===wid})[0],t=today(),
+paidRows=c.adv.filter(function(x){return x.wid===wid&&x.k==='paid'&&x.pt}).sort(function(a,b){return a.pt<b.pt?1:-1}),from;
+if(paidRows.length)from=addDays(paidRows[0].pt,1).slice(0,7)+'-01';
+else{var y=+t.slice(0,4),m=+t.slice(5,7);if(w&&sdayOf(w)){m--;if(m<1){m=12;y--}}from=y+'-'+pad2(m)+'-01'}
+return{f:from,t:mEnd(from.slice(0,7))}}
 
 /* small html helpers for white print documents */
 function hd3(t){return '<h3 style="font-size:13px;margin:14px 0 4px;color:#14171a;text-transform:uppercase">'+t+'</h3>'}
@@ -1223,11 +1225,11 @@ function tblh(head,rows,empty){return rows.length?'<table><tr>'+head.map(functio
 function kv(rows){return '<table>'+rows.map(function(x){return '<tr><td>'+x[0]+'</td><td class="r">'+(x[2]?'<b>':'')+x[1]+(x[2]?'</b>':'')+'</td></tr>'}).join('')+'</table>'}
 function shareText(t){if(!t)return;if(navigator.share){navigator.share({text:t}).catch(function(){})}else window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}
 
-/* ---- salary cycle table (Salary tab) ---- */
-function cycTable(c){var t=today(),h='<h3>Salary cycle (by salary day)</h3><div class="sheet"><table style="min-width:700px"><tr><th>Worker</th><th>Salary day</th><th>Cycle till today</th><th>Days</th><th>Earned</th><th>Advance</th><th>Left</th></tr>';
+/* ---- worker balance table (Salary tab) ---- */
+function cycTable(c){var t=today(),h='<h3>Worker balance (all time, till today)</h3><div class="sheet"><table style="min-width:680px"><tr><th>Worker</th><th>Days present</th><th>Earned</th><th>Taken (advance)</th><th>Pending</th><th>Paid</th><th>Balance</th></tr>';
 if(!c.wrk.length)h+='<tr><td colspan="7" class="r" style="text-align:left">No workers.</td></tr>';
-c.wrk.forEach(function(w){var s=wStmt(c,w,t),sd=sdayOf(w);h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+(sd||'<small class="note">not set</small>')+'</td><td class="r" style="text-align:left">'+esc(dmy(s.cy.s))+' → today<br><small class="note">pay day '+esc(dmy(s.cy.e))+'</small></td><td class="r">'+s.at.days+'</td><td class="r">'+money(s.inc)+'</td><td class="r">'+money(s.adv+s.carry)+'</td><td class="r '+(s.left<0?'neg':'pos')+'"><b>'+money(s.left)+'</b></td></tr>'});
-return h+'</table></div><p class="note">Set each worker’s salary day in the Workers tab. Money taken from the last salary day until the next one is advance and is cut from the salary paid on the salary day. After the salary day a new advance cycle starts. If no salary day is set, the calendar month is used.</p>'}
+c.wrk.forEach(function(w){var s=allTime(c,w,t);h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+fqn(s.at.days)+'</td><td class="r">'+money(s.earn)+'</td><td class="r">'+money(s.adv)+'</td><td class="r">'+money(s.outAmt)+'</td><td class="r">'+money(s.paid)+'</td><td class="r '+(s.bal<0?'neg':'pos')+'"><b>'+money(s.bal)+'</b></td></tr>'});
+return h+'</table></div><p class="note">Salary is always for a calendar month. Whatever advance a worker has taken — in that month or after it — is cut from the salary on the day you actually pay it (the salary day only decides which day that is). Set each worker’s salary day in the Workers tab.</p>'}
 
 /* ---- slip search + worker statement ---- */
 function slipRes(c){var q=S.slq.trim().toLowerCase(),a=c.wrk.filter(function(w){return !q||((w.name||'')+' '+(w.phone||'')+' '+(w.role||'')).toLowerCase().indexOf(q)>-1}).slice(0,12);
@@ -1235,24 +1237,23 @@ if(!c.wrk.length)return '<p class="note">Add workers first.</p>';
 return a.length?a.map(function(w){return '<button class="chip" data-a="wsl" data-id="'+w.id+'">'+esc(w.name||'(no name)')+'<small>'+esc(w.role||'')+'</small></button>'}).join(''):'<p class="note">No worker found.</p>'}
 function slipTab(c){var f=c.wrk.length?payDef(c,c.wrk[0].id):{f:today(),t:today()};
 var h='<h3>Find a worker slip</h3><div class="card"><input id="slq" placeholder="Search a worker name..." value="'+esc(S.slq)+'" autocomplete="off"><div id="slr" style="margin-top:8px">'+slipRes(c)+'</div><p class="note">Tap a name to see how much he has taken, his total income, his presence and how much is left till any date, as a slip.</p></div>';
-h+='<h3>Pay salary and make slip</h3><div class="card"><select id="sw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2" style="margin-top:8px"><div><label>Salary period from</label><input type="date" id="sf" value="'+f.f+'"></div><div><label>Salary period to</label><input type="date" id="st" value="'+f.t+'"></div></div><label class="note" style="margin-top:8px">Payment date</label><input type="date" id="sdt" value="'+today()+'"><button class="btn full" data-a="paysal">Pay salary and make slip</button><p class="note">The period is filled from the worker’s salary day. Advance taken before the salary day is deducted automatically. Advance taken after it stays for the next cycle. The slip shows every advance date by date.</p></div><h3>All slips</h3>';
+h+='<h3>Pay salary and make slip</h3><div class="card"><select id="sw">'+c.wrk.map(function(w){return '<option value="'+w.id+'">'+esc(w.name||'(no name)')+'</option>'}).join('')+'</select><div class="g2" style="margin-top:8px"><div><label>Salary period from</label><input type="date" id="sf" value="'+f.f+'"></div><div><label>Salary period to</label><input type="date" id="st" value="'+f.t+'"></div></div><label class="note" style="margin-top:8px">Payment date</label><input type="date" id="sdt" value="'+today()+'"><button class="btn full" data-a="paysal">Pay salary and make slip</button><p class="note">The period is the calendar month this salary is for. Every advance the worker has taken that is still pending, up to and including the payment date, is deducted automatically — it does not matter if it was taken in this month or later, only that it was taken before the payment date. The slip shows every advance date by date.</p></div><h3>All slips</h3>';
 var L=c.adv.filter(function(x){return x.k!=='bonus'&&x.k!=='ot'}).sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0});
 if(!L.length)return h+'<p class="note">No slips yet. An advance slip is made when you save an advance or loan.</p>';
 return h+L.map(function(x){var w=c.wrk.filter(function(y){return y.id===x.wid})[0];return '<div class="item" data-a="opsp" data-id="'+x.id+'"><div><b>'+esc(w?w.name:'(removed)')+'</b><br><small>'+(x.k==='paid'?'Salary slip · '+esc(x.pf?dmy(x.pf)+' to '+dmy(x.pt):x.m):(x.k==='loan'?'Loan slip':'Advance slip'))+' · '+esc(dmy(x.d))+'</small></div><b>'+money(num(x.amt))+'</b></div>'}).join('')}
-function wslDoc(c,w,ref){var t=wStmt(c,w,ref),cy=t.cy,sd=sdayOf(w),at=t.at,
-rows=t.al.map(function(x){return '<tr>'+cell(esc(dmy(x.d)))+cell(esc(x.note||(x.k==='loan'?'Loan':'Advance')))+cell(money(num(x.amt)),1)+'</tr>'});
-return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>WORKER SLIP</div><div class="rm"><span>Till date: '+esc(dmy(ref))+'</span><span>Salary day: '+(sd||'not set')+'</span></div><div><b>'+esc(w.name||'(no name)')+'</b>'+(w.role?' · '+esc(w.role):'')+(w.phone?' · '+esc(w.phone):'')+'</div><div style="font-size:12px;color:#555">Cycle: '+esc(dmy(cy.s))+' to '+esc(dmy(ref))+' · next pay day '+esc(dmy(cy.e))+(sd?'':' (salary day not set, calendar month used)')+'</div>'
-+hd3('Presence in this cycle')+kv([['Present',at.P],['Half day',at.H],['Absent',at.A],['Leave',at.L],['Days counted',at.days,1]])
-+hd3('Income in this cycle')+kv([['Salary for days worked',money(at.base)],['Overtime',money(t.ot)],['Bonus',money(t.bn)],['Total income',money(t.inc),1]])
-+hd3('Money taken (advance), date by date')+tblh(['Date','Note','>Amount'],rows,'No advance taken in this cycle.')
-+kv([['Total taken in this cycle',money(t.adv),1]].concat(t.carry>0.004?[['Earlier advance still to be cut',money(t.carry)]]:[]))
-+'<div class="rt"><div class="gt"><span>'+(t.left<0?'Extra advance (cut from coming earnings)':'Left to receive till this date')+'</span><span>'+money(t.left)+'</span></div></div>'
-+hd3('All time till '+esc(dmy(ref)))+kv([['Total earned',money(t.allEarn)],['Total advance / loan taken',money(t.allAdv)],['Salary already paid (net)',money(t.paid)],['Balance',money(t.bal),1]])
+function wslDoc(c,w,ref){var s=allTime(c,w,ref),al=advListTo(c,w,ref),
+rows=al.map(function(x){return '<tr>'+cell(esc(dmy(x.d)))+cell(esc(x.note||(x.k==='loan'?'Loan':'Advance')))+cell(money(num(x.amt)),1)+cell(x.s?'Deducted':(num(x.dd)>0?'Part deducted ('+money(num(x.dd))+')':'Pending'))+'</tr>'});
+return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>WORKER SLIP</div><div class="rm"><span>Till date: '+esc(dmy(ref))+'</span>'+(sdayOf(w)?'<span>Salary day: '+sdayOf(w)+'</span>':'')+'</div><div><b>'+esc(w.name||'(no name)')+'</b>'+(w.role?' · '+esc(w.role):'')+(w.phone?' · '+esc(w.phone):'')+'</div>'
++hd3('Presence till this date')+kv([['Present',s.at.P],['Half day',s.at.H],['Absent',s.at.A],['Leave',s.at.L],['Days counted',fqn(s.at.days),1]])
++hd3('Total income till this date')+kv([['Total income (salary for days worked + overtime + bonus)',money(s.earn),1]])
++hd3('Money taken (advance / loan), date by date')+tblh(['Date','Note','>Amount','Status'],rows,'No advance taken.')
++kv([['Total taken till this date',money(s.adv),1],['Still pending (not yet cut from a salary)',money(s.outAmt)],['Salary already paid (net)',money(s.paid)]])
++'<div class="rt"><div class="gt"><span>'+(s.bal<0?'Extra taken (will be cut from the next salary)':'Left to receive till this date')+'</span><span>'+money(s.bal)+'</span></div></div>'
 +'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'}
 function vWsl(){var c=C(),w=c.wrk.filter(function(x){return x.id===S.wslid})[0];if(!w)return '<p class="note">Worker not found.</p>';var ref=S.wsld||today();
 return '<h2>'+esc(w.name||'(no name)')+'</h2><label class="note">Slip till date</label><input type="date" id="wsld" value="'+esc(ref)+'" style="margin-bottom:10px">'+wslDoc(c,w,ref)+'<div class="actions" style="margin-top:10px"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="wsl">Share</button><button class="btn alt" data-a="back">Back</button></div><p class="note">For a PDF, choose “Save as PDF” in the print window, then share the file.</p>'}
-function wslText(c){var w=c.wrk.filter(function(x){return x.id===S.wslid})[0];if(!w)return '';var ref=S.wsld||today(),t=wStmt(c,w,ref);
-return '*'+c.name+'* worker slip\n'+(w.name||'')+' | till '+dmy(ref)+'\nCycle: '+dmy(t.cy.s)+' to '+dmy(ref)+' (pay day '+dmy(t.cy.e)+')\nPresent '+t.at.P+', half '+t.at.H+', absent '+t.at.A+', leave '+t.at.L+'\nIncome: '+money(t.inc)+'\nTaken: '+money(t.adv+t.carry)+'\nLeft: '+money(t.left)}
+function wslText(c){var w=c.wrk.filter(function(x){return x.id===S.wslid})[0];if(!w)return '';var ref=S.wsld||today(),s=allTime(c,w,ref);
+return '*'+c.name+'* worker slip\n'+(w.name||'')+' | till '+dmy(ref)+'\nPresent '+s.at.P+', half '+s.at.H+', absent '+s.at.A+', leave '+s.at.L+'\nIncome: '+money(s.earn)+'\nTaken: '+money(s.adv)+'\nPending: '+money(s.outAmt)+'\nBalance: '+money(s.bal)}
 
 /* ---- dues with payment history ---- */
 function duesAt(c,d){var L=[];
@@ -1312,9 +1313,9 @@ function biData(c,m){var a=m+'-01',b=mEnd(m),o={m:m,a:a,b:b,inc:0,exp:0,sn:0,st:
 c.led.forEach(function(r){if(r.d>=a&&r.d<=b){o.inc+=num(r.inc);o.exp+=num(r.exp)}});
 c.sal.forEach(function(s){if(s.d>=a&&s.d<=b){o.sn++;o.st+=saleTotal(s);o.sp+=num(s.paid)}});
 c.rcpt.forEach(function(r){if(r.d>=a&&r.d<=b){o.rn++;o.rt+=rcptTotal(r);o.rp+=num(r.paid)}});
-o.ws=c.wrk.map(function(w){var at=attPeriod(c,w,a,b),ot=sumK(c,w,a,b,'ot'),bn=sumK(c,w,a,b,'bonus'),adv=advList(c,w,a,b).reduce(function(t,x){return t+num(x.amt)},0),
+o.ws=c.wrk.map(function(w){var at=attPeriod(c,w,a,b),ot=sumK(c,w,a,b,'ot'),bn=sumK(c,w,a,b,'bonus'),adv=sumAdv(c,w,a,b),
 paid=c.adv.filter(function(x){return x.wid===w.id&&x.k==='paid'&&x.d>=a&&x.d<=b}).reduce(function(t,x){return t+num(x.net)},0);
-return{w:w,at:at,earn:at.base+ot+bn,adv:adv,paid:paid,due:wStmt(c,w,b).bal}});
+return{w:w,at:at,earn:at.base+ot+bn,adv:adv,paid:paid,due:allTime(c,w,b).bal}});
 o.wDays=0;o.wEarn=0;o.wAdv=0;o.wPaid=0;o.wDue=0;o.ws.forEach(function(x){o.wDays+=x.at.days;o.wEarn+=x.earn;o.wAdv+=x.adv;o.wPaid+=x.paid;o.wDue+=x.due});
 c.debt.forEach(function(r){if(r.d>=a&&r.d<=b){o.dbuy+=dTot(r);o.dpaid+=num(r.paid)}if(r.d<=b)o.dout+=dTot(r)-num(r.paid)});
 o.dueOut=duesAt(c,b).reduce(function(t,x){return t+(x.due>0.004?x.due:0)},0);
@@ -1413,12 +1414,11 @@ function vSps(){var c=C(),r=c.adv.filter(function(x){return x.id===S.sp})[0];if(
 var w=c.wrk.filter(function(x){return x.id===r.wid})[0]||{name:'(removed)'},wn='<div><b>'+esc(w.name)+'</b>'+(w.role?' · '+esc(w.role):'')+'</div>',
 out=c.adv.filter(function(a){return a.wid===r.wid&&isAdvK(a)&&!a.s}).reduce(function(t,a){return t+num(a.amt)-num(a.dd)},0),
 act='<div class="actions"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="back">Back</button><button class="btn alt" data-a="delsp">Delete slip</button></div>';
-if(r.k!=='paid'){var t=wStmt(c,w,r.d),cy=t.cy,sd=sdayOf(w);
-var rows=t.al.map(function(a){return '<tr>'+cell(esc(dmy(a.d)))+cell(esc(a.note||(a.k==='loan'?'Loan':'Advance')))+cell(a.id===r.id?'<b>'+money(num(a.amt))+'</b>':money(num(a.amt)),1)+'</tr>'});
+if(r.k!=='paid'){var s=allTime(c,w,r.d),al=advListTo(c,w,r.d);
+var rows=al.map(function(a){return '<tr>'+cell(esc(dmy(a.d)))+cell(esc(a.note||(a.k==='loan'?'Loan':'Advance')))+cell(a.id===r.id?'<b>'+money(num(a.amt))+'</b>':money(num(a.amt)),1)+'</tr>'});
 return '<div id="rcpt"><div class="rh"><b>'+esc(c.name)+'</b><br>'+(r.k==='loan'?'LOAN':'ADVANCE')+' SLIP</div><div class="rm"><span>Date given: '+esc(dmy(r.d))+'</span><span>Amount: '+money(num(r.amt))+'</span></div>'+wn
-+'<div style="font-size:12px;color:#555">'+(sd?'Salary day: '+sd+' of every month':'Salary day not set (calendar month)')+' · Cycle '+esc(dmy(cy.s))+' to '+esc(dmy(r.d))+' · next pay day '+esc(dmy(cy.e))+'</div>'
-+hd3('Money taken in this cycle, date by date')+tblh(['Date','Note','>Amount'],rows)
-+kv([['Total taken in this cycle',money(t.adv),1]].concat(t.carry>0.004?[['Earlier advance still to be cut',money(t.carry)]]:[]).concat([['Salary earned in this cycle till '+esc(dmy(r.d)),money(t.inc)],['Left to receive after advance',money(t.left),1],['To be deducted from salary on pay day',money(out)]]))
++hd3('Money taken till this date, date by date')+tblh(['Date','Note','>Amount'],rows)
++kv([['Total taken till this date',money(s.adv),1],['Income earned till this date',money(s.earn)],['Pending (will be cut on the next salary day)',money(out),1]])
 +(r.note?'<p style="font-size:12px">Note: '+esc(r.note)+'</p>':'')+'<p style="font-size:12px;margin-top:18px">Worker signature: ____________</p></div>'+act}
 var L=c.adv.filter(function(a){return a.wid===r.wid&&isAdvK(a)}).sort(function(a,b){return a.d<b.d?-1:1}),
 rows2=L.map(function(a){var pn=r.parts&&r.parts[a.id],st=pn!=null?(a.s&&a.p===r.id?'Deducted now':'Part deducted now: '+money(pn)):(r.ids.indexOf(a.id)>-1?'Deducted now':(a.s?'Deducted earlier':(num(a.dd)>0?'Part deducted earlier':'Pending')));return '<tr><td>'+esc(dmy(a.d))+'</td><td>'+esc(a.note||(a.k==='loan'?'Loan':'Advance'))+'</td><td class="r">'+money(num(a.amt))+'</td><td>'+st+'</td></tr>'}).join('');
