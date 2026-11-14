@@ -226,6 +226,15 @@ function armLbl(k){return S.arm===k?'Tap again to delete':'Delete'}
 function item(c,id){return c.stk.filter(function(x){return x.id===id})[0]}
 function mvAdj(c,it,delta,type,note,d,x){it.qty=num(it.qty)+delta;var m={id:uid(),d:d||today(),pid:it.id,name:it.name,unit:it.unit,delta:delta,type:type,note:note||''};if(x)Object.keys(x).forEach(function(k){m[k]=x[k]});c.mov.push(m)}
 var TYPES={'in':'Produced / in','out':'Stock out',sale:'Sold',set:'Adjusted',open:'Opening'};
+/* ---- raw material purchase price (v31) ---- */
+function isRawMv(c,m){var it=item(c,m.pid);return it?it.kind==='raw':m.kd==='raw'}
+function isRawBuy(c,m){return isRawMv(c,m)&&(m.type==='in'||m.type==='open')&&num(m.delta)>0}
+function rawBuys(c,a,b){return c.mov.filter(function(m){return m.d>=a&&m.d<=b&&isRawBuy(c,m)})}
+function rawSum(l){var o={n:0,cost:0,noRate:0,rq:0,qty:{}};l.forEach(function(m){var q=num(m.delta),r=num(m.rate),u=unitKey(m.unit);o.n++;o.qty[u]=(o.qty[u]||0)+q;o.cost+=q*r;if(r>0)o.rq+=q;else o.noRate++});return o}
+function lastRate(c,id){for(var i=c.mov.length-1;i>=0;i--){var m=c.mov[i];if(m.pid===id&&isRawBuy(c,m)&&num(m.rate)>0)return num(m.rate)}return 0}
+function rawTot(id){var a=$('adj-'+id),r=$('rate-'+id),o=$('rt-'+id);if(o)o.value=(a&&r&&num(a.value)>0&&num(r.value)>0)?money(num(a.value)*num(r.value)):''}
+function rateBox(c,i){var lr=lastRate(c,i.id),sm=rawSum(c.mov.filter(function(m){return m.pid===i.id&&isRawBuy(c,m)})),tq=0;Object.keys(sm.qty).forEach(function(k){tq+=sm.qty[k]});
+return '<div class="g2" style="margin-top:8px"><div><label>Price per unit ৳ (for + IN)</label><input id="rate-'+i.id+'" type="text" inputmode="decimal" data-n="1" placeholder="'+(lr?'last: '+lr:'0')+'" autocomplete="off"></div><div><label>Total price ৳ (amount × price)</label><input id="rt-'+i.id+'" readonly tabindex="-1" placeholder="auto"></div></div>'+(sm.n?'<small class="note">All purchases: '+fqn(tq)+' '+esc(i.unit)+' · '+money(sm.cost)+(sm.rq>0?' · average '+money(sm.cost/sm.rq)+' per '+esc(i.unit):'')+'</small>':'')}
 function saleTotal(s){return s.lines.reduce(function(a,l){return a+l.qty*l.price},0)}
 
 /* ---------- animated front screen ---------- */
@@ -346,17 +355,19 @@ function lastMv(c,id){for(var i=c.mov.length-1;i>=0;i--)if(c.mov[i].pid===id){va
 function stockTab(isRaw){var nt=S.sd!==today()?'<p class="note" style="color:var(--accent)">Entering '+(isRaw?'raw material':'stock')+' for '+dmy(S.sd)+'. Set the date back to today for today’s entries.</p>':'';
 var ph=isRaw?'e.g. Mouthcut, PP scrap, Red color':'e.g. PP granules, PET jar';
 var sumLbl=isRaw?'+ Add new raw material':'+ Add new product';
-return '<div class="card"><label class="note">'+(isRaw?'Raw material entry date':'Stock entry date')+' (pick an earlier day to add forgotten stock)</label><input type="date" id="sd" value="'+S.sd+'">'+nt+'</div><input id="q" placeholder="'+(isRaw?'Search raw material...':'Search product...')+'" value="'+esc(S.q)+'" autocomplete="off"><details class="card" style="margin-top:10px"><summary>'+sumLbl+'</summary><div class="g2"><div><label>'+(isRaw?'Raw material name':'Product name')+'</label><input id="sn" placeholder="'+ph+'"></div><div><label>Unit</label><input id="su" placeholder="kg, bag, pcs"></div></div><input type="hidden" id="sk" value="'+(isRaw?'raw':'product')+'"><label class="note">Starting quantity</label><input id="sq0" type="number" inputmode="decimal" placeholder="0"><button class="btn full" data-a="addstk">'+(isRaw?'Add raw material':'Add product')+'</button></details><div id="sl">'+stkList(C(),isRaw)+'</div>'+stkEntries(C(),isRaw)}
+return '<div class="card"><label class="note">'+(isRaw?'Raw material entry date':'Stock entry date')+' (pick an earlier day to add forgotten stock)</label><input type="date" id="sd" value="'+S.sd+'">'+nt+'</div><input id="q" placeholder="'+(isRaw?'Search raw material...':'Search product...')+'" value="'+esc(S.q)+'" autocomplete="off"><details class="card" style="margin-top:10px"><summary>'+sumLbl+'</summary><div class="g2"><div><label>'+(isRaw?'Raw material name':'Product name')+'</label><input id="sn" placeholder="'+ph+'"></div><div><label>Unit</label><input id="su" placeholder="kg, bag, pcs"></div></div><input type="hidden" id="sk" value="'+(isRaw?'raw':'product')+'"><label class="note">Starting quantity</label><input id="sq0" type="number" inputmode="decimal" placeholder="0">'+(isRaw?'<label class="note">Price per unit ৳ (optional)</label><input id="sp0" type="text" inputmode="decimal" data-n="1" placeholder="0">':'')+'<button class="btn full" data-a="addstk">'+(isRaw?'Add raw material':'Add product')+'</button></details><div id="sl">'+stkList(C(),isRaw)+'</div>'+stkEntries(C(),isRaw)}
 function stkEntries(c,isRaw){
-var a=c.mov.filter(function(m){if(m.d!==S.sd)return false;var it=item(c,m.pid),r=it?it.kind==='raw':m.kd==='raw';return isRaw?r:!r});
-return '<h3>'+(isRaw?'Raw material entries':'Stock entries')+' on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.ser?' · Serial '+esc(m.ser)+(m.bn?' / batch '+esc(m.bn):''):'')+(m.note?' · '+esc(m.note):'')+'</small></div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No '+(isRaw?'raw material':'stock')+' entries on this date.</p>')}
+var a=c.mov.filter(function(m){if(m.d!==S.sd)return false;var it=item(c,m.pid),r=it?it.kind==='raw':m.kd==='raw';return isRaw?r:!r}),top='';
+if(isRaw){var ds=rawSum(rawBuys(c,S.sd,S.sd)),m0=S.sd.slice(0,7),ms=rawSum(rawBuys(c,m0+'-01',mEnd(m0)));
+top='<h3>Raw material total on '+dmy(S.sd)+'</h3><div class="tiles"><div class="tile"><small>Bought on this date</small><b>'+unitsTxt(ds.qty)+'</b></div><div class="tile"><small>Cost on this date</small><b>'+money(ds.cost)+'</b></div><div class="tile"><small>Month '+m0+' cost</small><b>'+money(ms.cost)+'</b></div></div>'+(ds.noRate?'<p class="note neg">'+ds.noRate+' entr'+(ds.noRate>1?'ies have':'y has')+' no price. Type the price per unit on the entry below.</p>':'')}
+return top+'<h3>'+(isRaw?'Raw material entries':'Stock entries')+' on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid),rb=isRaw&&isRawBuy(c,m);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.ser?' · Serial '+esc(m.ser)+(m.bn?' / batch '+esc(m.bn):''):'')+(m.note?' · '+esc(m.note):'')+'</small>'+(rb?'<br><label class="note">Price per unit ৳</label><input type="text" inputmode="decimal" data-n="1" data-f="rate" data-k="mov" data-id="'+m.id+'" value="'+esc(num(m.rate)>0?num(m.rate):'')+'" placeholder="0" style="width:120px;padding:6px">':'')+'</div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(rb?'<br><b>'+(num(m.rate)>0?money(num(m.delta)*num(m.rate)):'no price')+'</b>':'')+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No '+(isRaw?'raw material':'stock')+' entries on this date.</p>')}
 function stkReportHtml(c,i){
 var totProd=legacy(c,i),totSold=0,prodRows=[],sellRows=[];
 c.mov.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(m){
 if(m.pid!==i.id)return;
 if(isAdd(m)){
 totProd+=num(m.delta);
-prodRows.push('<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(i.unit)+'</td><td class="r" style="text-align:left">'+(m.ser?'Serial '+esc(m.ser):esc(TYPES[m.type]||''))+'</td></tr>');
+prodRows.push('<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(i.unit)+'</td><td class="r" style="text-align:left">'+(m.ser?'Serial '+esc(m.ser):esc(TYPES[m.type]||''))+(i.kind==='raw'&&num(m.rate)>0?' · ৳'+fqn(m.rate)+'/'+esc(i.unit)+' = '+money(num(m.delta)*num(m.rate)):'')+'</td></tr>');
 }else if(m.delta<0){
 var q=Math.abs(num(m.delta));
 totSold+=q;
@@ -384,7 +395,7 @@ function stkList(c,isRaw){
 if(isRaw===undefined)isRaw=(S.tab==='raw');
 var q=S.q.trim().toLowerCase(),allKind=c.stk.filter(function(i){return isRaw?i.kind==='raw':i.kind!=='raw'}),a=allKind.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1});
 if(!a.length)return '<p class="note">'+(allKind.length?(isRaw?'No raw material matches.':'No product matches.'):(isRaw?'No raw materials yet. Add your first raw material above.':'No products yet. Add your first product above.'))+'</p>';
-return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div>'+serBox(c,i)+'<div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small>'+(i.kind==='raw'?'':'<button class="btn sm" data-a="serd" data-id="'+i.id+'">By serial</button>')+'<button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div>'+(q?stkReportHtml(c,i):'')+'</div>'}).join('')}
+return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div>'+serBox(c,i)+(i.kind==='raw'?rateBox(c,i):'')+'<div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small>'+(i.kind==='raw'?'':'<button class="btn sm" data-a="serd" data-id="'+i.id+'">By serial</button>')+'<button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div>'+(q?stkReportHtml(c,i):'')+'</div>'}).join('')}
 
 function sellRes(c){
 var q=S.sq.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1}).slice(0,8);
@@ -682,6 +693,7 @@ document.addEventListener('contextmenu',function(e){if(e.target.closest('[data-l
 document.addEventListener('input',function(e){var t=e.target;
 if(t.id==='q'){S.q=t.value;$('sl').innerHTML=stkList(C())}
 else if(t.id==='sq'){S.sq=t.value;$('sr').innerHTML=sellRes(C())}
+else if(t.id&&(t.id.indexOf('adj-')===0||t.id.indexOf('rate-')===0)){rawTot(t.id.replace(/^(adj|rate)-/,''))}
 else if(t.id==='lq'){S.lq=t.value;$('lr').innerHTML=ledBody()}
 else if(t.id==='dq'){S.dq=t.value;$('dt').innerHTML=debtTable(C())}
 else if(t.id==='wsq'){S.wsq=t.value;$('wsr').innerHTML=wsRes(C())}
@@ -791,10 +803,11 @@ S.arm='';c[k]=c[k].filter(function(x){return x.id!==id});save();render()}
 else if(a==='addrow'){S.lq='';var m=S.month,nr2={id:uid(),d:S.ld||(m===today().slice(0,7)?today():m+'-'+('0'+daysIn(m)).slice(-2)),note:'',qty:'',unit:'kg',rate:'',inc:'',exp:'',t:(S.atab==='exp'?'exp':'inc')};c.led.push(nr2);FOC='input[data-f=note][data-id="'+nr2.id+'"]';save();render()}
 else if(a==='adddebt'){var nd={id:uid(),d:today(),sup:'',item:'',qty:'',unit:'kg',rate:'',price:'',paid:''};c.debt.push(nd);FOC='input[data-f=sup][data-id="'+nd.id+'"]';save();render()}
 else if(a==='addstk'){var n2=$('sn').value.trim();if(!n2){toast('Enter the item name');return}
-var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0)mvAdj(c,it,q0,'open','',S.sd,it.kind==='raw'?{ser:String(nextSer(c)),kd:'raw'}:null);save();render()}
+var it={id:uid(),name:n2,unit:$('su').value.trim()||'kg',kind:$('sk').value,qty:0};c.stk.unshift(it);var q0=num($('sq0').value);if(q0>0){var xo=it.kind==='raw'?{ser:String(nextSer(c)),kd:'raw'}:null;if(xo&&$('sp0')&&num($('sp0').value)>0)xo.rate=num($('sp0').value);mvAdj(c,it,q0,'open','',S.sd,xo)}save();render()}
 else if(a==='in'||a==='out'){var it2=find('stk',id),v=num($('adj-'+id).value);if(v<=0){toast('Enter an amount');return}
 if(a==='out'&&v>num(it2.qty)){toast('Only '+num(it2.qty)+' '+it2.unit+' in stock');return}
 var xs=null;if(a==='in'){xs=serPick(c,it2);if(xs===false)return}
+if(a==='in'&&it2.kind==='raw'&&xs){var rv=num(($('rate-'+id)||{}).value);if(rv>0)xs.rate=rv}
 mvAdj(c,it2,a==='in'?v:-v,a,'',S.sd,xs);save();render()}
 else if(a==='delmv'){var key2='mv'+id;if(S.arm!==key2){S.arm=key2;render();return}
 S.arm='';var mm=c.mov.filter(function(x){return x.id===id})[0];if(!mm)return;var itx=item(c,mm.pid);
@@ -844,6 +857,7 @@ else if(a==='serd'){S.sdid=id;S.v='sd';S.arm='';render();window.scrollTo(0,0)}
 else if(a==='lotop'){S.lot=b.dataset.ser;S.v='lot';S.arm='';render();window.scrollTo(0,0)}
 else if(a==='shr'){var sw0=b.dataset.w;shareText(sw0==='day'?dayText(c,S.rd):sw0==='wsl'?wslText(c):sw0==='bi'?biText(c):'')}
 else if(a==='bisaltg'){S.bisal=S.bisal?0:1;render()}
+else if(a==='birawtg'){S.birawx=S.birawx?0:1;render()}
 else if(a==='pr'){window.print()}
 else if(a==='wa'){
 var sv=c.sal.filter(function(x){return x.id===S.inv})[0],tt=saleTotal(sv),msg='*'+c.name+'*\nInvoice '+sv.no+' | '+dmy(sv.d)+'\nCustomer: '+(sv.cust||'Walk-in')+'\n';
@@ -885,7 +899,7 @@ var COLLS=['led','debt','stk','sal','mov','wrk','adv','rcpt','due'];
 /* CHANGED: added rcpt label */
 var LBL={led:'income/expense row',debt:'factory debt row',stk:'stock item',sal:'invoice',mov:'stock entry',wrk:'worker',adv:'advance',att:'attendance day',co:'company',rcpt:'receipt'};
 /* CHANGED: added receipt view/print actions (viewers can view/print but not edit) */
-var ROA={open:1,go:1,atab:1,tab:1,wtab:1,back:1,wopen:1,ldclr:1,pr:1,openinv:1,wa:1,bak:1,signout:1,setpin:1,offpin:1,openrcpt:1,printrcpt:1,backrcpt:1,warcpt:1,opsp:1,wsl:1,serd:1,lotop:1,shr:1,bisaltg:1};
+var ROA={open:1,go:1,atab:1,tab:1,wtab:1,back:1,wopen:1,ldclr:1,pr:1,openinv:1,wa:1,bak:1,signout:1,setpin:1,offpin:1,openrcpt:1,printrcpt:1,backrcpt:1,warcpt:1,opsp:1,wsl:1,serd:1,lotop:1,shr:1,bisaltg:1,birawtg:1};
 var ROOK={q:1,sq:1,dq:1,lq:1,wsq:1,mo:1,ldf:1,ad:1,rd:1,td:1,sd:1,wm:1,pn0:1,pn1:1,pn2:1,ir:1,slq:1,serq:1,wsld:1,bim:1};
 var LOGO=($('lg')?$('lg').outerHTML:'').replace('width="34" height="34"','width="64" height="64"').replace('id="lg"','');
 
@@ -1317,6 +1331,9 @@ h+=hd3('Dues still to receive (till this date)')+tblh(['Customer','Reference','D
 if(od.length)h+=kv([['Total dues to receive',money(ot),1]])+'<p style="font-size:12px;color:#555">A due stays in every report until it is paid. On the day it is paid, the report of that day shows it under “Dues received”.</p>';
 var dr=c.debt.filter(function(r){return r.d===d});
 h+=hd3('Factory debt entries on this date')+tblh(['Supplier','Material','Serial','>Quantity','>Total','>Paid'],dr.map(function(r){return '<tr>'+cell(esc(r.sup||''))+cell(esc(r.item||''))+cell(esc(r.ser||'-'))+cell(r.qty!==''&&r.qty!=null?esc(r.qty)+' '+esc(r.unit||'kg'):'-',1)+cell(money(dTot(r)),1)+cell(money(num(r.paid)),1)+'</tr>'}));
+var rb=rawBuys(c,d,d),rbs=rawSum(rb);
+h+=hd3('Raw materials bought on this date')+tblh(['Material','Serial','>Quantity','>Price/unit','>Total'],rb.map(function(m){var it=item(c,m.pid);return '<tr>'+cell(esc(it?it.name:m.name))+cell(esc(m.ser||'-'))+cell(fqn(m.delta)+' '+esc(m.unit),1)+cell(num(m.rate)>0?money(num(m.rate)):'-',1)+cell(num(m.rate)>0?money(num(m.delta)*num(m.rate)):'-',1)+'</tr>'}),'No raw material bought on this date.');
+if(rb.length)h+=kv([['Total raw material cost',money(rbs.cost),1]]);
 var sb={};c.debt.forEach(function(r){if(r.d>d)return;var nm=supClean(r.sup)||'(no name)',k=supKey(nm)||'(no name)',o=sb[k]||(sb[k]={n:nm,t:0,p:0});o.t+=dTot(r);o.p+=num(r.paid)});
 var so=Object.keys(sb).map(function(k){return sb[k]}).filter(function(o){return o.t-o.p>0.004}),sot=0;
 h+=hd3('Debt to suppliers (till this date)')+tblh(['Supplier','>Total','>Paid','>Left'],so.map(function(o){sot+=o.t-o.p;return '<tr>'+cell(esc(o.n))+cell(money(o.t),1)+cell(money(o.p),1)+cell(money(o.t-o.p),1,1)+'</tr>'}),'No supplier debt.');
@@ -1338,7 +1355,7 @@ var dl=duesAt(c,d),od=dl.filter(function(x){return x.due>0.004}),rc=dl.filter(fu
 if(rc.length)t+='\n\nDues received:\n'+rc.map(function(x){return '- '+x.who+': '+money(x.rcvd)}).join('\n');
 if(od.length)t+='\n\nDues to receive ('+money(od.reduce(function(a,x){return a+x.due},0))+'):\n'+od.slice(0,15).map(function(x){return '- '+x.who+' ('+dmy(x.d)+'): '+money(x.due)}).join('\n');
 var day=c.att[d]||{},n={P:0,A:0,L:0,H:0};c.wrk.forEach(function(w){if(day[w.id])n[day[w.id]]++});
-return t+'\n\nPresent '+n.P+', half '+n.H+', absent '+n.A+', leave '+n.L}
+var rs0=rawSum(rawBuys(c,d,d));if(rs0.n)t+='\n\nRaw material bought: '+money(rs0.cost);return t+'\n\nPresent '+n.P+', half '+n.H+', absent '+n.A+', leave '+n.L}
 function vDay(){var c=C(),d=S.rd;
 return '<h2>Date report</h2><input type="date" id="rd" value="'+esc(d)+'" style="margin-bottom:10px">'+dayHtml(c,d)+'<div class="actions" style="margin-top:10px"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="day">Share</button></div><p class="note">Choose “Save as PDF” in the print window to make the PDF, then send or upload it. “Share” sends a short text summary (WhatsApp or any app).</p>'}
 
@@ -1360,7 +1377,11 @@ if(isRaw){if(isAdd(mv))ra[u]=(ra[u]||0)+mv.delta}
 else if(isAdd(mv)){pu[u]=(pu[u]||0)+mv.delta;var f=fac(mv.unit);if(f)kg+=mv.delta*f;else kgPart=true}
 else if(mv.delta<0)ou[u]=(ou[u]||0)-mv.delta});
 o.pu=pu;o.ra=ra;o.ou=ou;o.kg=kg;o.kgPart=kgPart;
-o.cost=o.exp+(S.bisal?o.wEarn:0);o.cpk=kg>0?o.cost/kg:null;
+var rbl=rawBuys(c,a,b),rbs=rawSum(rbl),rmm={};rbl.forEach(function(m){var it=item(c,m.pid),nm=it?it.name:m.name,k=String(nm||'').trim().toLowerCase(),o2=rmm[k]||(rmm[k]={n:nm,u:it?it.unit:m.unit,q:0,rq:0,cost:0}),q=num(m.delta),r=num(m.rate);o2.q+=q;if(r>0)o2.rq+=q;o2.cost+=q*r});
+o.rawCost=rbs.cost;o.rawNoRate=rbs.noRate;o.rm=Object.keys(rmm).map(function(k){return rmm[k]}).sort(function(x,y){return y.cost-x.cost});
+var psm={};c.sal.forEach(function(s2){if(s2.d>=a&&s2.d<=b)s2.lines.forEach(function(l){var k=String(l.name||'').trim().toLowerCase(),o3=psm[k]||(psm[k]={n:l.name,u:l.unit||'',q:0,v:0});o3.q+=num(l.qty);o3.v+=num(l.qty)*num(l.price)})});
+o.prodSold=Object.keys(psm).map(function(k){return psm[k]}).sort(function(x,y){return y.v-x.v});
+o.cost=o.exp+(S.bisal?o.wEarn:0)+(S.birawx?0:o.rawCost);o.cpk=kg>0?o.cost/kg:null;
 var L=lotsOf(c,b);o.lots=Object.keys(L).filter(function(k){var x=L[k];return(x.raws||[]).some(function(r){return r.d>=a})||x.batches.some(function(r){return r.d>=a})}).sort(serCmp).map(function(k){return L[k]});
 return o}
 function unitsTxt(o){var k=Object.keys(o);return k.length?k.map(function(u){return fqn(o[u])+' '+esc(u)}).join(' · '):'-'}
@@ -1372,15 +1393,19 @@ h+=hd3('Sales')+kv([['Invoices',o.sn],['Sales value',money(o.st)],['Received at 
 h+=hd3('Debt and dues')+kv([['Bought on debt this month',money(o.dbuy)],['Paid to suppliers this month',money(o.dpaid)],['Debt to suppliers (till month end)',money(o.dout),1],['Dues received this month',money(o.dueRecv)],['Dues still to receive (month end)',money(o.dueOut),1]]);
 h+=hd3('Production and raw material')+kv([['Raw material received',unitsTxt(o.ra)],['Product made',unitsTxt(o.pu),1],['Sold / stock out',unitsTxt(o.ou)]]);
 if(o.lots.length)h+=tblh(['Serial','Raw material','>Raw in','>Product made','>Loss'],o.lots.map(function(x){var s=lotStat(x);return '<tr>'+cell(esc(x.ser))+cell(esc(x.rawName||'-'))+cell(fqn(x.rawQty)+' '+esc(x.rawUnit),1)+cell(Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')||'-',1)+cell(s.loss!=null?fqn(s.loss)+' '+esc(x.rawUnit)+' ('+s.pct.toFixed(1)+'%)':'-',1)+'</tr>'}));
-h+=hd3('Costing')+kv([['Expenses (Accounts)',money(o.exp)],['Worker salary earned',S.bisal?money(o.wEarn):'left out'],['Total cost',money(o.cost),1],['Total product made (in kg)',o.kg>0?fqn(o.kg)+' kg'+(o.kgPart?' (units other than kg/ton not counted)':''):'-'],['Cost per kg of product',o.cpk!=null?money(o.cpk):'-',1],['Profit (income − total cost)',money(o.inc-o.cost),1]]);
-return h+'<p style="font-size:12px;color:#555">If you already enter salary payments as an expense in Accounts, leave worker salary out of the cost (button below) so it is not counted twice.</p></div>'}
-function biText(c){var m=S.bim||today().slice(0,7),o=biData(c,m);return '*'+c.name+'* summary '+m+'\nWorkers: '+c.wrk.length+' | salary earned '+money(o.wEarn)+'\nIncome: '+money(o.inc)+'\nExpenses: '+money(o.exp)+'\nSales: '+money(o.st)+'\nDebt to suppliers: '+money(o.dout)+'\nDues to receive: '+money(o.dueOut)+'\nProduct made: '+unitsTxt(o.pu).replace(/&amp;/g,'&')+(o.cpk!=null?'\nCost per kg: '+money(o.cpk):'')}
+h+=hd3('Raw material bought')+tblh(['Material','>Quantity','>Average price','>Total cost'],o.rm.map(function(x){return '<tr>'+cell(esc(x.n))+cell(fqn(x.q)+' '+esc(x.u),1)+cell(x.rq>0?money(x.cost/x.rq):'-',1)+cell(money(x.cost),1)+'</tr>'}),'No raw material bought this month.');
+if(o.rm.length)h+=kv([['Total raw material bought',unitsTxt(o.ra)],['Total raw material cost',money(o.rawCost),1]])+(o.rawNoRate?'<p style="font-size:12px;color:#c62f26">'+o.rawNoRate+' raw material entr'+(o.rawNoRate>1?'ies have':'y has')+' no price, so the cost above is not complete.</p>':'');
+h+=hd3('Products sold')+tblh(['Product','>Quantity','>Sales value'],o.prodSold.map(function(x){return '<tr>'+cell(esc(x.n))+cell(fqn(x.q)+(x.u?' '+esc(x.u):''),1)+cell(money(x.v),1)+'</tr>'}),'No product sold this month.');
+if(o.prodSold.length)h+=kv([['Total sales value',money(o.st),1]]);
+h+=hd3('Costing')+kv([['Raw material cost',S.birawx?'left out (already in expenses)':money(o.rawCost)],['Expenses (Accounts)',money(o.exp)],['Worker salary earned',S.bisal?money(o.wEarn):'left out'],['Total cost',money(o.cost),1],['Total sales value',money(o.st)],['Profit on sales (sales value − total cost)',money(o.st-o.cost),1],['Total product made (in kg)',o.kg>0?fqn(o.kg)+' kg'+(o.kgPart?' (units other than kg/ton not counted)':''):'-'],['Cost per kg of product',o.cpk!=null?money(o.cpk):'-',1],['Profit (income − total cost)',money(o.inc-o.cost),1]]);
+return h+'<p style="font-size:12px;color:#555">If you already enter salary payments as an expense in Accounts, leave worker salary out of the cost (button below) so it is not counted twice. The same for raw material: if you also enter raw material purchases as an expense in Accounts, leave raw material cost out (button below).</p></div>'}
+function biText(c){var m=S.bim||today().slice(0,7),o=biData(c,m);return '*'+c.name+'* summary '+m+'\nWorkers: '+c.wrk.length+' | salary earned '+money(o.wEarn)+'\nIncome: '+money(o.inc)+'\nExpenses: '+money(o.exp)+'\nRaw material bought: '+unitsTxt(o.ra).replace(/&amp;/g,'&')+' = '+money(o.rawCost)+'\nSales: '+money(o.st)+'\nTotal cost: '+money(o.cost)+'\nDebt to suppliers: '+money(o.dout)+'\nDues to receive: '+money(o.dueOut)+'\nProduct made: '+unitsTxt(o.pu).replace(/&amp;/g,'&')+(o.cpk!=null?'\nCost per kg: '+money(o.cpk):'')}
 function vBi(){var c=C(),m=S.bim||today().slice(0,7),t=today().slice(0,7),pv=new Date(+t.slice(0,4),+t.slice(5,7)-2,1),pm=pv.getFullYear()+'-'+pad2(pv.getMonth()+1),ex={},inc={},top={};
 c.led.forEach(function(r){var k=r.d.slice(0,7);ex[k]=(ex[k]||0)+num(r.exp);inc[k]=(inc[k]||0)+num(r.inc)});
 c.sal.forEach(function(s){s.lines.forEach(function(l){top[l.name]=(top[l.name]||0)+l.qty*l.price})});
 var ch=function(a,b){return b?((a-b)/b*100).toFixed(1)+'%':'-'},tp=Object.keys(top).sort(function(a,b){return top[b]-top[a]}).slice(0,5);
 return '<h2>Business insights</h2><label class="note">Month</label><input type="month" id="bim" value="'+esc(m)+'" style="margin-bottom:10px">'+biHtml(c,m)
-+'<div class="actions" style="margin:10px 0"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="bi">Share summary</button><button class="btn alt" data-a="bisaltg">'+(S.bisal?'Leave worker salary out of cost':'Include worker salary in cost')+'</button></div>'
++'<div class="actions" style="margin:10px 0"><button class="btn" data-a="pr">Print / Save as PDF</button><button class="btn alt" data-a="shr" data-w="bi">Share summary</button><button class="btn alt" data-a="bisaltg">'+(S.bisal?'Leave worker salary out of cost':'Include worker salary in cost')+'</button><button class="btn alt" data-a="birawtg">'+(S.birawx?'Count raw material cost in costing':'Leave raw material cost out of costing')+'</button></div>'
 +'<h3>Trends</h3><div class="tiles" style="grid-template-columns:repeat(2,1fr)"><div class="tile"><small>Expense this month</small><b class="neg">'+money(ex[t]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(ex[t]||0,ex[pm])+'</b></div><div class="tile"><small>Income this month</small><b class="pos">'+money(inc[t]||0)+'</b></div><div class="tile"><small>Change vs last month</small><b>'+ch(inc[t]||0,inc[pm])+'</b></div></div><h3>Top selling products (by sales value)</h3>'+(tp.length?tp.map(function(k){return '<div class="item"><b>'+esc(k)+'</b><b>'+money(top[k])+'</b></div>'}).join(''):'<p class="note">No sales yet.</p>')+'<h3>Last 6 months</h3><div class="sheet"><table><tr><th>Month</th><th>Income</th><th>Expense</th><th>Net</th></tr>'+Object.keys(ex).concat(Object.keys(inc)).filter(function(v,i,a){return a.indexOf(v)===i}).sort().reverse().slice(0,6).map(function(k){return '<tr><td>'+k+'</td><td class="r">'+money(inc[k]||0)+'</td><td class="r">'+money(ex[k]||0)+'</td><td class="r"><b>'+money((inc[k]||0)-(ex[k]||0))+'</b></td></tr>'}).join('')+'</table></div>'}
 
 /* ---- serial numbers: raw material lots and the products made from them ---- */
@@ -1389,8 +1414,8 @@ function fac(u){return FAC[String(u||'').trim().toLowerCase()]||0}
 function conv(q,fu,tu){if(unitKey(fu)===unitKey(tu))return q;var a=fac(fu),b=fac(tu);return(a&&b)?q*a/b:null}
 function serCmp(a,b){var x=parseFloat(a),y=parseFloat(b);if(!isNaN(x)&&!isNaN(y)&&x!==y)return x-y;return a<b?-1:a>b?1:0}
 function lotsOf(c,upto){var L={};
-c.mov.forEach(function(m){if(!m.ser||(upto&&m.d>upto))return;var k=String(m.ser),o=L[k]||(L[k]={ser:k,rawQty:0,rawUnit:'',rawName:'',d:'',raws:[],batches:[]});
-if(m.kd==='raw'){if(m.type==='in'||m.type==='open'){o.rawQty+=num(m.delta);o.rawUnit=o.rawUnit||m.unit;o.rawName=o.rawName||m.name;o.d=(!o.d||m.d<o.d)?m.d:o.d;o.raws.push(m)}}
+c.mov.forEach(function(m){if(!m.ser||(upto&&m.d>upto))return;var k=String(m.ser),o=L[k]||(L[k]={ser:k,rawQty:0,rawCost:0,rawUnit:'',rawName:'',d:'',raws:[],batches:[]});
+if(m.kd==='raw'){if(m.type==='in'||m.type==='open'){o.rawQty+=num(m.delta);o.rawCost+=num(m.delta)*num(m.rate);o.rawUnit=o.rawUnit||m.unit;o.rawName=o.rawName||m.name;o.d=(!o.d||m.d<o.d)?m.d:o.d;o.raws.push(m)}}
 else if(m.kd==='product'&&isAdd(m))o.batches.push(m)});
 return L}
 function lotStat(o){var used=0,prodIn=0,unk=false,pt={},allRu=o.batches.length>0;
@@ -1438,7 +1463,7 @@ var left=Object.keys(pids).map(function(id){var it=item(c,id);if(!it)return '';v
 return '<h2>Serial '+esc(o.ser)+'</h2><div class="card"><b>'+esc(o.rawName)+'</b><br><small class="note">Received '+esc(dmy(o.d))+(sup?' · Supplier '+esc(sup):'')+'</small></div>'
 +'<div class="tiles"><div class="tile"><small>Raw in</small><b>'+fqn(o.rawQty)+' '+esc(o.rawUnit)+'</b></div><div class="tile"><small>Product made</small><b class="pos">'+(Object.keys(s.prodTxt).map(function(u){return fqn(s.prodTxt[u])+' '+esc(u)}).join(' + ')||'0')+'</b></div><div class="tile"><small>Loss</small><b class="'+(s.loss!=null&&s.loss>0?'neg':'')+'">'+(s.loss!=null?fqn(s.loss)+' '+esc(o.rawUnit)+'<br><small>'+s.pct.toFixed(1)+'%</small>':'-')+'</b></div></div>'
 +'<p class="note">'+(!o.batches.length?'No product made from this serial yet.':s.unk?'Loss cannot be worked out because the product unit cannot be converted to the raw material unit (use kg or ton).':s.allRu?'Loss is worked out on the raw material actually used ('+fqn(s.used)+' '+esc(o.rawUnit)+'). Not used yet: '+fqn(s.left)+' '+esc(o.rawUnit)+'.':'Loss is worked out on the whole lot ('+fqn(o.rawQty)+' '+esc(o.rawUnit)+'). If you enter “raw used” on each production entry, it is worked out on what was really used.')+'</p>'
-+'<h3>Raw material received</h3><div class="sheet"><table style="min-width:360px"><tr><th>Date</th><th>Quantity</th></tr>'+o.raws.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+fqn(m.delta)+' '+esc(m.unit)+'</td></tr>'}).join('')+'</table></div>'
++'<h3>Raw material received</h3><div class="sheet"><table style="min-width:460px"><tr><th>Date</th><th>Quantity</th><th>Price/unit</th><th>Total</th></tr>'+o.raws.map(function(m){return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+fqn(m.delta)+' '+esc(m.unit)+'</td><td class="r">'+(num(m.rate)>0?money(num(m.rate)):'-')+'</td><td class="r">'+(num(m.rate)>0?money(num(m.delta)*num(m.rate)):'-')+'</td></tr>'}).join('')+(o.rawCost>0?'<tr class="tot"><td colspan="3">Total raw cost of this serial</td><td class="r">'+money(o.rawCost)+'</td></tr>':'')+'</table></div>'
 +'<h3>Product made from this serial</h3><div class="sheet"><table style="min-width:520px"><tr><th>Date</th><th>Batch</th><th>Product</th><th>Quantity</th><th>Raw used</th><th>Yield</th></tr>'+(bs.map(function(m){var it=item(c,m.pid),ru=num(m.ru),v=ru>0?conv(num(m.delta),m.unit,o.rawUnit):null;return '<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r">'+esc(m.bn||'-')+'</td><td class="r" style="text-align:left">'+esc(it?it.name:m.name)+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(m.unit)+'</td><td class="r">'+(ru>0?fqn(ru)+' '+esc(o.rawUnit):'-')+'</td><td class="r">'+(v!=null?(v/ru*100).toFixed(1)+'%':'-')+'</td></tr>'}).join('')||'<tr><td colspan="6" class="r" style="text-align:left">None yet.</td></tr>')+'</table></div>'
 +(left?'<h3>Still in stock from this serial</h3>'+left+'<p class="note">Sold / stock-out quantity is taken from the oldest serial first.</p>':'')}
 
