@@ -350,11 +350,41 @@ return '<div class="card"><label class="note">'+(isRaw?'Raw material entry date'
 function stkEntries(c,isRaw){
 var a=c.mov.filter(function(m){if(m.d!==S.sd)return false;var it=item(c,m.pid),r=it?it.kind==='raw':m.kd==='raw';return isRaw?r:!r});
 return '<h3>'+(isRaw?'Raw material entries':'Stock entries')+' on '+dmy(S.sd)+'</h3>'+(a.length?a.map(function(m){var it=item(c,m.pid);return '<div class="item"><div><b>'+esc(it?it.name:m.name)+'</b><br><small>'+TYPES[m.type]+(m.ser?' · Serial '+esc(m.ser)+(m.bn?' / batch '+esc(m.bn):''):'')+(m.note?' · '+esc(m.note):'')+'</small></div><div style="text-align:right"><b class="'+(m.delta>0?'pos':'neg')+'">'+(m.delta>0?'+':'−')+Math.abs(m.delta)+' '+esc(m.unit)+'</b>'+(m.type==='sale'?'':'<br><button class="btn alt sm" data-a="delmv" data-id="'+m.id+'">'+(S.arm==='mv'+m.id?'Tap again to delete':'Delete entry')+'</button>')+'</div></div>'}).join(''):'<p class="note">No '+(isRaw?'raw material':'stock')+' entries on this date.</p>')}
+function stkReportHtml(c,i){
+var totProd=legacy(c,i),totSold=0,prodRows=[],sellRows=[];
+c.mov.slice().sort(function(a,b){return a.d<b.d?1:a.d>b.d?-1:0}).forEach(function(m){
+if(m.pid!==i.id)return;
+if(isAdd(m)){
+totProd+=num(m.delta);
+prodRows.push('<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r pos">+'+fqn(m.delta)+' '+esc(i.unit)+'</td><td class="r" style="text-align:left">'+(m.ser?'Serial '+esc(m.ser):esc(TYPES[m.type]||''))+'</td></tr>');
+}else if(m.delta<0){
+var q=Math.abs(num(m.delta));
+totSold+=q;
+var ref=m.type==='sale'?'Sold ('+esc(m.note||'Invoice')+')':esc(TYPES[m.type]||'Out');
+sellRows.push('<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r neg">−'+fqn(q)+' '+esc(i.unit)+'</td><td class="r" style="text-align:left">'+ref+'</td></tr>');
+}
+});
+if(legacy(c,i)>0)prodRows.push('<tr><td class="r" style="text-align:left">Opening / Earlier</td><td class="r pos">+'+fqn(legacy(c,i))+' '+esc(i.unit)+'</td><td class="r" style="text-align:left">Initial stock</td></tr>');
+var h='<div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--line)">';
+h+='<div class="tiles" style="grid-template-columns:repeat(3,1fr);margin:6px 0">';
+h+='<div class="tile"><small>Total '+(i.kind==='raw'?'In':'Produced')+'</small><b class="pos">'+fqn(totProd)+' '+esc(i.unit)+'</b></div>';
+h+='<div class="tile"><small>Total '+(i.kind==='raw'?'Used / Out':'Sold / Out')+'</small><b class="neg">'+fqn(totSold)+' '+esc(i.unit)+'</b></div>';
+h+='<div class="tile"><small>Current Stock</small><b>'+fqn(num(i.qty))+' '+esc(i.unit)+'</b></div>';
+h+='</div>';
+h+='<details style="margin-top:6px" open><summary style="font-size:.9rem;color:var(--accent);cursor:pointer;font-weight:700">▶ Date-wise Production &amp; Sales History</summary>';
+h+='<div style="margin-top:6px"><small class="note"><b>'+(i.kind==='raw'?'Stock In History':'Production History')+':</b></small>';
+h+=prodRows.length?'<div class="sheet" style="margin:4px 0 8px"><table style="min-width:100%"><tr><th>Date</th><th class="r">Qty</th><th>Details</th></tr>'+prodRows.join('')+'</table></div>':'<p class="note">No production entries yet.</p>';
+h+='<small class="note"><b>'+(i.kind==='raw'?'Stock Out History':'Sales / Out History')+':</b></small>';
+h+=sellRows.length?'<div class="sheet" style="margin:4px 0"><table style="min-width:100%"><tr><th>Date</th><th class="r">Qty</th><th>Reference</th></tr>'+sellRows.join('')+'</table></div>':'<p class="note">No sales or stock-out entries yet.</p>';
+h+='</div></details></div>';
+return h;
+}
+
 function stkList(c,isRaw){
 if(isRaw===undefined)isRaw=(S.tab==='raw');
 var q=S.q.trim().toLowerCase(),allKind=c.stk.filter(function(i){return isRaw?i.kind==='raw':i.kind!=='raw'}),a=allKind.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1});
 if(!a.length)return '<p class="note">'+(allKind.length?(isRaw?'No raw material matches.':'No product matches.'):(isRaw?'No raw materials yet. Add your first raw material above.':'No products yet. Add your first product above.'))+'</p>';
-return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div>'+serBox(c,i)+'<div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small>'+(i.kind==='raw'?'':'<button class="btn sm" data-a="serd" data-id="'+i.id+'">By serial</button>')+'<button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div></div>'}).join('')}
+return a.map(function(i){return '<div class="card"><div class="top"><input class="nm" value="'+esc(i.name)+'" data-f="name" data-k="stk" data-id="'+i.id+'"><span class="q">'+esc(num(i.qty))+' '+esc(i.unit)+'</span></div><div class="g3" style="margin-top:6px"><div><label>Unit</label><input value="'+esc(i.unit)+'" data-f="unit" data-k="stk" data-id="'+i.id+'"></div><div><label>Type</label><select data-f="kind" data-k="stk" data-id="'+i.id+'"><option value="product"'+(i.kind==='raw'?'':' selected')+'>Product</option><option value="raw"'+(i.kind==='raw'?' selected':'')+'>Raw material</option></select></div><div><label>Set quantity</label><input type="number" inputmode="decimal" value="'+esc(i.qty)+'" data-f="qty" data-k="stk" data-id="'+i.id+'"></div></div>'+serBox(c,i)+'<div class="adj"><input type="number" inputmode="decimal" id="adj-'+i.id+'" placeholder="Amount"><button class="btn" data-a="in" data-id="'+i.id+'">'+(i.kind==='raw'?'+ In':'+ Produced')+'</button><button class="btn alt" data-a="out" data-id="'+i.id+'">− Out</button></div><div class="top" style="margin-top:6px"><small class="note">'+esc(lastMv(c,i.id))+'</small>'+(i.kind==='raw'?'':'<button class="btn sm" data-a="serd" data-id="'+i.id+'">By serial</button>')+'<button class="btn alt sm" data-a="del" data-k="stk" data-id="'+i.id+'">'+armLbl('stk'+i.id)+'</button></div>'+(q?stkReportHtml(c,i):'')+'</div>'}).join('')}
 
 function sellRes(c){
 var q=S.sq.trim().toLowerCase(),a=c.stk.filter(function(i){return !q||i.name.toLowerCase().indexOf(q)>-1}).slice(0,8);
