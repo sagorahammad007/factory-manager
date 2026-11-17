@@ -17,7 +17,14 @@ box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:en
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:Barlow,Arial,sans-serif;line-height:1.45}
 h1,h2,h3,.logo{font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;text-transform:uppercase;letter-spacing:.03em;margin:0}
-.wrap{max-width:760px;margin:0 auto;padding:0 14px}
+.wrap{width:100%;max-width:none;margin:0 auto;padding:0 clamp(12px,2.2vw,40px)}
+/* phones: read-only tables shrink to the screen instead of scrolling sideways */
+@media(max-width:700px){.wrap{padding:0 8px}
+.sheet table:not(:has(input,select,textarea,button)){min-width:0!important;font-size:.74rem}
+.sheet table:not(:has(input,select,textarea,button)) th{padding:6px 2px;font-size:.6rem;letter-spacing:0;white-space:normal;font-size:.56rem}
+.sheet table:not(:has(input,select,textarea,button)) td:first-child,.sheet table:not(:has(input,select,textarea,button)) th:first-child{min-width:62px}
+.sheet table:not(:has(input,select,textarea,button)) td,.sheet table:not(:has(input,select,textarea,button)) td.r{padding:6px 2px}
+.sheet table:not(:has(input,select,textarea,button)) td.r[style*="text-align:left"]{white-space:normal;word-break:break-word}}
 header{position:sticky;top:0;z-index:10;background:var(--dark);color:#f2f4f5;border-bottom:4px solid var(--accent)}
 header .wrap{display:flex;align-items:center;gap:10px;height:56px}
 #bk{background:none;border:2px solid var(--accent);color:var(--accent);font:700 1rem "Barlow Condensed",Arial,sans-serif;padding:4px 10px;cursor:pointer;text-transform:uppercase}
@@ -41,6 +48,10 @@ input:focus,select:focus{outline:2px solid var(--accent)}
 .tile b{display:block;font:800 1.2rem "Barlow Condensed",Arial,sans-serif}
 .pos{color:var(--green)}.neg{color:var(--red)}
 .sheet{overflow-x:auto;border:1px solid var(--line);background:var(--surface)}
+.sheet.fz{overflow:auto;max-height:calc(100vh - 110px);-webkit-overflow-scrolling:touch}
+.sheet.fz th{position:sticky;top:0;z-index:3}
+.sheet.fz td:first-child,.sheet.fz th:first-child{position:sticky;left:0;z-index:2;background:var(--surface);box-shadow:1px 0 0 var(--line)}
+.sheet.fz th:first-child{z-index:4;background:var(--dark)}
 table{border-collapse:collapse;width:100%;min-width:640px}
 th{background:var(--dark);color:var(--accent);font:700 .85rem "Barlow Condensed",Arial,sans-serif;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:8px 6px;position:sticky;top:0}
 td{border-top:1px solid var(--line);padding:2px}
@@ -456,7 +467,7 @@ h+=blk((now?'1. Today’s production':'1. Production on')+' ('+dmy(d)+')','day',
 +blk('2. In stock total'+(now?'':' (end of '+dmy(d)+')'),'stock','',function(r,u){return 'Total '+r.all+' − sold/out '+r.s+(r.stock!==r.all-r.s?' (raw materials included)':'')})
 +blk('3. Total production of this month ('+d.slice(0,7)+')','mon','pos')
 +blk('4. Total production '+(now?'till today':'till '+dmy(d))+' by factory','all','pos',function(r,u){return 'Opening stock '+r.o+' + produced '+r.day});
-h+='<h3>By item</h3><div class="sheet"><table style="min-width:900px"><tr><th>Item</th><th>Unit</th><th>Opening stock</th><th>Produced '+dmy(d)+'</th><th>Total till '+(now?'today':dmy(d))+' by factory</th><th>Sold / out</th><th>In stock</th><th>Produced '+d.slice(0,7)+'</th></tr>';
+h+='<h3>By item</h3><div class="sheet fz"><table style="min-width:900px"><tr><th>Item</th><th>Unit</th><th>Opening stock</th><th>Produced '+dmy(d)+'</th><th>Total till '+(now?'today':dmy(d))+' by factory</th><th>Sold / out</th><th>In stock</th><th>Produced '+d.slice(0,7)+'</th></tr>';
 c.stk.forEach(function(i){var raw=i.kind==='raw',rg=regFor(c,[i]),r=regAt(rg,d);
 h+='<tr><td class="r" style="text-align:left">'+esc(i.name)+(raw?' <small class="note">(raw)</small>':'')+'</td><td class="r">'+esc(i.unit)+'</td><td class="r">'+(raw?'-':r.o)+'</td><td class="r">'+(raw?'-':r.p)+'</td><td class="r">'+(raw?'-':r.tot)+'</td><td class="r">'+(raw?'-':r.s)+'</td><td class="r"><b>'+qtyAt(c,i,d)+'</b></td><td class="r">'+(raw?'-':regMonth(rg,d))+'</td></tr>'});
 h+='</table></div>';
@@ -467,7 +478,7 @@ if(rg.base>0)rows.push('<tr><td class="r" style="text-align:left">Earlier stock<
 ds.forEach(function(k){var x=rg.days[k],tot=run+x.p,end=tot-x.s;
 rows.push('<tr><td class="r" style="text-align:left">'+dmy(k)+'</td><td class="r">'+run+'</td><td class="r pos">'+(x.p||'-')+'</td><td class="r"><b>'+tot+'</b></td><td class="r neg">'+(x.s||'-')+'</td><td class="r"><b>'+end+' '+esc(u)+'</b></td></tr>');run=end});
 if(!rows.length)return;
-h+='<h3>Daily stock register ('+esc(u)+')</h3><div class="sheet"><table style="min-width:560px"><tr><th>Date</th><th>Opening stock</th><th>Produced</th><th>Total (opening + produced)</th><th>Sold / out</th><th>Closing stock</th></tr>'+rows.reverse().join('')+'</table></div>'});
+h+='<h3>Daily stock register ('+esc(u)+')</h3><div class="sheet fz"><table style="min-width:560px"><tr><th>Date</th><th>Opening stock</th><th>Produced</th><th>Total (opening + produced)</th><th>Sold / out</th><th>Closing stock</th></tr>'+rows.reverse().join('')+'</table></div>'});
 return h+'<p class="note">Total production till today by factory = opening stock (yesterday’s closing stock) + today’s production. Selling or “− Out” never changes it and only lowers In stock. In stock = opening stock + produced − sold / out. Raw materials are not counted in production. This page is calculated, so it cannot be edited.</p>'}
 
 function vInv(){
@@ -635,7 +646,7 @@ Object.keys(c.att).forEach(function(x){if(x.slice(0,7)===m&&c.att[x][w.id])k[c.a
 h+='<tr><td class="r" style="text-align:left">'+esc(w.name)+'</td><td class="r">'+k.P+'</td><td class="r">'+k.H+'</td><td class="r">'+k.A+'</td><td class="r">'+k.L+'</td><td class="r"><b>'+money((k.P+k.H/2)*num(w.wage)/daysIn(m))+'</b></td></tr>'});
 return h+'</table></div>'}
 function salHtml(c){
-var h='<div class="sheet"><table style="min-width:600px"><tr><th>Worker</th><th>Days</th><th>Monthly</th><th>Earned</th><th>Adv / paid</th><th>Due</th></tr>',te=0,ta=0;
+var h='<div class="sheet fz"><table style="min-width:600px"><tr><th>Worker</th><th>Days</th><th>Monthly</th><th>Earned</th><th>Adv / paid</th><th>Due</th></tr>',te=0,ta=0;
 c.wrk.forEach(function(w){var e=earned(c,w),a=advOf(c,w.id)+paidOf(c,w.id);te+=e.earn;ta+=a;
 h+='<tr><td class="r" style="text-align:left">'+esc(w.name||'(no name)')+'</td><td class="r">'+e.days+'</td><td class="r">'+money(num(w.wage))+'</td><td class="r">'+money(e.earn)+'</td><td class="r">'+money(a)+'</td><td class="r '+(e.earn-a<0?'neg':'pos')+'"><b>'+money(e.earn-a)+'</b></td></tr>'});
 h+='<tr class="tot"><td colspan="3">Total</td><td class="r">'+money(te)+'</td><td class="r">'+money(ta)+'</td><td class="r '+(te-ta<0?'neg':'pos')+'">'+money(te-ta)+'</td></tr></table></div><p class="note">Earned = salary for the days present, up to today, from the attendance sheet. Due = Earned − Advance. A red minus number is extra advance: it gets smaller every day the worker is present, and is cut from his salary.</p>';
@@ -1597,7 +1608,7 @@ else if(m.link)act='<small class="note">Auto</small>';else act='<button class="b
 var r='<tr><td class="r" style="text-align:left">'+esc(dmy(m.d))+'</td><td class="r" style="text-align:left">'+esc(TYPES[m.type]||m.type)+'</td><td class="r '+(add?'pos':'neg')+'">'+(add?'+':'−')+fqn(Math.abs(num(m.delta)))+' '+U+'</td><td class="r" style="text-align:left">'+(det.join('<br>')||'-')+'</td><td class="r">'+act+'</td></tr>';
 return r}).join('');
 if(leg>0&&!filt)body+='<tr><td class="r" style="text-align:left">Earlier</td><td class="r" style="text-align:left">Opening</td><td class="r pos">+'+fqn(leg)+' '+U+'</td><td class="r" style="text-align:left">Stock before entries were logged</td><td></td></tr>';
-h+='<div class="sheet"><table style="min-width:640px"><tr><th>Date</th><th>Type</th><th>Quantity</th><th>Details</th><th></th></tr>'+(body||'<tr><td colspan="5" class="r" style="text-align:left">No entries'+(filt?' in these dates':'')+'.</td></tr>')+'</table></div>'
+h+='<div class="sheet fz"><table style="min-width:640px"><tr><th>Date</th><th>Type</th><th>Quantity</th><th>Details</th><th></th></tr>'+(body||'<tr><td colspan="5" class="r" style="text-align:left">No entries'+(filt?' in these dates':'')+'.</td></tr>')+'</table></div>'
 +'<p class="note">Sold entries come from invoices; open the invoice to see the customer. To correct a wrong production quantity, tap Edit. Delete is blocked when part of that stock was already sold.</p>';
 return h}
 function vOb(){var c=C(),o=c.ob||{},d=obDate(c),ob=obStock(c);
